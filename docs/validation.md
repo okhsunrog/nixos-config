@@ -13,8 +13,14 @@ Preparation started on 2026-10-04 from the running Arch boot environment.
   its disposable disk has no serial/by-id link.
 - Full laptop-system build completed; its closure is approximately 6.5 GiB.
 - The host pool is healthy and has approximately 859 GiB available after cleanup.
-- No laptop datasets have been created and no passwords/keys have been copied.
+- Laptop installation completed in `novafs/nixos0/root` with its separate home.
+  Kernel, private initramfs, hostid, dataset properties and copied secret files
+  passed the post-install checks. Existing `bootfs` remains unset.
+- Post-install checks were corrected to dereference the initramfs symlink and
+  resolve `/etc/hostid` inside the target root.
 - No physical NixOS boot, niri session or hardware validation has occurred.
 
 Current build logs are `/tmp/nixos-framework-current.log` and
-`/tmp/nixos-be-test-recovery.log`. Both builds finished successfully.
+`/tmp/nixos-be-test-recovery.log`. Both builds finished successfully. The physical
+installation log is `/tmp/nixos-framework-install.log`; the initial wrapper
+stopped at its symlink-permission assertion, which was corrected and rerun.
