@@ -34,8 +34,10 @@ Preparation started on 2026-10-04 from the running Arch boot environment.
   user's home ownership/dataset, absence of hidden root-dataset home directories,
   generation updates and snapshot-clone boot.
 - Regression logs: `/tmp/nixos-home-red.log` and `/tmp/nixos-home-green.log`.
-- The corrected laptop closure built successfully. Installation of this update
-  into the existing BE is in progress.
+- The corrected laptop closure built successfully and was installed into the
+  existing BE. Post-install checks passed, including the initrd mount declaration.
+  Updated source is copied to `/etc/nixos`; the corrected state is snapshotted as
+  `novafs/nixos0@home-mount-fix`. Earlier snapshots retain the old configuration.
 
 Current build logs are `/tmp/nixos-framework-current.log` and
 `/tmp/nixos-be-test-recovery.log`. Both builds finished successfully. The physical
