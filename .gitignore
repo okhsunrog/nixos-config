@@ -1,0 +1,5 @@
+/result*
+/.work/
+/secrets/
+*.qcow2
+*.raw
