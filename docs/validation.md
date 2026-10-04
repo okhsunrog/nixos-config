@@ -56,5 +56,11 @@ stopped at its symlink-permission assertion, which was corrected and rerun.
   man page and the separate terminfo output are installed by the package.
 - Niri configuration validation passed with Super+Enter launching Rio.
   Foot remains installed as a fallback.
+- The complete system was installed into `novafs/nixos0/root`. Post-install
+  boot/secret/home checks passed; Rio and foot version commands and niri
+  validation passed inside the installed root. The pre-update snapshot is
+  `novafs/nixos0@before-rio`, and the installed state is `@rio-installed`.
+  Dataset quota remains `none`, and pool `bootfs` remains unset.
+- Installation log: `/tmp/nixos-rio-install.log`.
 - Build log: `/tmp/nixos-rio-final-build.log`. No graphical Rio session on the
   physical NixOS system has been tested yet.
