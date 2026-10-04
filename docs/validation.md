@@ -22,6 +22,21 @@ Preparation started on 2026-10-04 from the running Arch boot environment.
   resolve `/etc/hostid` inside the target root.
 - No physical NixOS boot, niri session or hardware validation has occurred.
 
+## Home mount regression: red / green
+
+- RED: adding a normal user to the encrypted-pool VM reproduced a first-boot
+  failure. Account activation created `/home/probe` before mounting the home
+  dataset; ZFS rejected the nonempty mountpoint with `overlay=off`, and the guest
+  entered emergency mode. The test failed at its 300-second global timeout.
+- Fix: `/home` has `neededForBoot = true` in both the laptop configuration and
+  the VM fixture, so it mounts in initrd before account activation.
+- GREEN: the complete VM test passed in 88.96 seconds, including the normal
+  user's home ownership/dataset, absence of hidden root-dataset home directories,
+  generation updates and snapshot-clone boot.
+- Regression logs: `/tmp/nixos-home-red.log` and `/tmp/nixos-home-green.log`.
+- The corrected laptop closure built successfully. Installation of this update
+  into the existing BE is in progress.
+
 Current build logs are `/tmp/nixos-framework-current.log` and
 `/tmp/nixos-be-test-recovery.log`. Both builds finished successfully. The physical
 installation log is `/tmp/nixos-framework-install.log`; the initial wrapper

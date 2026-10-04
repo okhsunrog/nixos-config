@@ -36,6 +36,8 @@
     device = "novafs/nixos0/data/home";
     fsType = "zfs";
     options = [ "zfsutil" ];
+    # Account activation creates home directories before switch-root.
+    neededForBoot = true;
   };
 
   programs.niri.enable = true;

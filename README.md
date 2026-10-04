@@ -16,6 +16,13 @@ all datasets inherit `overlay=off`, `normalization=none`, `utf8only=off`, native
 encryption from `novafs`. No dataset quota is imposed.
 Other boot environments are not automatically mounted by NixOS.
 
+Mounts are explicitly declared with `fileSystems`. `/home` is needed in initrd
+before account activation creates home directories; otherwise `overlay=off`
+rejects mounting the home dataset over those directories. Adding a dataset
+requires a corresponding configuration change. An independent clone with its
+own home needs updated root/home dataset names and a rebuilt generation before
+its first boot.
+
 ## Build and verify
 
 From Arch, where Nix is already installed:
@@ -32,6 +39,8 @@ The VM test uses a disposable encrypted ZFS disk, installs a minimal system,
 boots it through a ZBM-style kexec handoff, publishes an updated generation,
 then boots a clone of the original snapshot. It checks the actual root dataset,
 the original system marker, hostid, home mount, and absence of foreign-BE mounts.
+It also boots with a normal user and checks that its home was created on the
+home dataset, without hidden directories beneath `/home` on the root dataset.
 This is not yet an end-to-end UEFI/ZFSBootMenu or physical laptop test.
 
 ## Install on the laptop

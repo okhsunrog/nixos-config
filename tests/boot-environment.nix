@@ -28,6 +28,12 @@ let
             device = "testpool/nixos0/data/home";
             fsType = "zfs";
             options = [ "zfsutil" ];
+            neededForBoot = true;
+          };
+          # Exercise account activation before switch-root, as on the laptop.
+          users.users.probe = {
+            isNormalUser = true;
+            uid = 1000;
           };
           environment.systemPackages = [ pkgs.kexec-tools ];
           environment.etc."generation-marker".text = "original";
@@ -80,6 +86,10 @@ pkgs.testers.runNixOSTest {
     machine.wait_for_unit("multi-user.target")
     machine.succeed("test $(findmnt -n -o SOURCE /) = testpool/nixos0/root; test $(hostid) = 00bab10c")
     machine.succeed("test $(cat /etc/generation-marker) = original; test $(findmnt -n -o SOURCE /home) = testpool/nixos0/data/home; ! findmnt /foreign-home")
+    machine.succeed("test $(stat -c %u /home/probe) = 1000; test $(findmnt -n -o SOURCE -T /home/probe) = testpool/nixos0/data/home")
+    # A plain bind mount exposes the root dataset without its child mounts.
+    # Activation must not create a hidden home on the root before /home mounts.
+    machine.succeed("mkdir -p /run/root-underlay; mount --bind / /run/root-underlay; test -z \"$(find /run/root-underlay/home -mindepth 1 -maxdepth 1 -print -quit)\"; umount /run/root-underlay")
     machine.succeed("readlink /boot/nixos-current > /tmp/bundle-before; mv /etc/zfs/test.key /etc/zfs/test.key.saved")
     machine.fail("${target}/specialisation/updated/bin/switch-to-configuration boot", timeout=120)
     machine.succeed("readlink /boot/nixos-current > /tmp/bundle-after; cmp /tmp/bundle-before /tmp/bundle-after; mv /etc/zfs/test.key.saved /etc/zfs/test.key")

@@ -22,5 +22,6 @@ for user in root okhsunrog; do
 done
 # Resolve absolute /etc/static symlinks inside the installed root, not Arch.
 system=$(readlink -e "$repo/result-framework")
+awk '$1 == "novafs/nixos0/data/home" && $2 == "/home" && $3 == "zfs" && $4 ~ /(^|,)x-initrd.mount(,|$)/ { found = 1 } END { exit !found }' "$system/etc/fstab"
 [[ $(chroot "$target" "$system/sw/bin/od" -An -tx1 /etc/hostid | tr -d ' \n') == 0cb1ba00 ]]
 echo "Verified $dataset: layout, hostid, boot kernel, private initrd and copied secrets. Physical boot remains to be tested."
