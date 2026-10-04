@@ -16,6 +16,8 @@ Preparation started on 2026-10-04 from the running Arch boot environment.
 - Laptop installation completed in `novafs/nixos0/root` with its separate home.
   Kernel, private initramfs, hostid, dataset properties and copied secret files
   passed the post-install checks. Existing `bootfs` remains unset.
+- The initial hierarchy quota was removed at the user's request; installation
+  does not impose a dataset quota.
 - Post-install checks were corrected to dereference the initramfs symlink and
   resolve `/etc/hostid` inside the target root.
 - No physical NixOS boot, niri session or hardware validation has occurred.

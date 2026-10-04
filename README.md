@@ -13,7 +13,7 @@ database, kernel and initramfs can be restored together. `/home` lives in
 
 All new mountable datasets use `canmount=noauto`. The root has `mountpoint=/`;
 all datasets inherit `overlay=off`, `normalization=none`, `utf8only=off`, native
-encryption from `novafs`, and a 60 GiB hierarchy quota including snapshots.
+encryption from `novafs`. No dataset quota is imposed.
 Other boot environments are not automatically mounted by NixOS.
 
 ## Build and verify

@@ -40,7 +40,7 @@ default_before=$(zpool get -H -o value bootfs "$pool")
 
 zfs create -u -o mountpoint=none -o canmount=off -o overlay=off \
     -o normalization=none -o utf8only=off -o acltype=posixacl -o xattr=sa \
-    -o compression=zstd -o quota=60G "$prefix"
+    -o compression=zstd "$prefix"
 zfs create -u -o mountpoint=/ -o canmount=noauto "$prefix/root"
 zfs create -u -o mountpoint=none "$prefix/data"
 zfs create -u -o mountpoint=/home -o canmount=noauto "$prefix/data/home"
