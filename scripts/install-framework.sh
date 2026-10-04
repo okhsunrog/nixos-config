@@ -73,7 +73,7 @@ find "$target/etc/nixos" -mindepth 1 -maxdepth 1 -type d ! -name secrets -exec c
 [[ $(zfs get -H -o value normalization "$prefix/root") == none ]]
 [[ $(zfs get -H -o value utf8only "$prefix/root") == off ]]
 [[ -s $target/boot/vmlinuz-nixos && -s $target/boot/initramfs-nixos.img ]]
-[[ $(stat -c %a "$target/boot/initramfs-nixos.img") == 600 ]]
+[[ $(stat -Lc %a "$target/boot/initramfs-nixos.img") == 600 ]]
 "$repo/scripts/verify-framework.sh" "$target"
 zfs snapshot -r "$prefix@fresh-install"
 sync -f "$target"
