@@ -7,6 +7,14 @@
       url = "github:NixOS/nixos-hardware";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    rio-src = {
+      url = "github:okhsunrog/rio/11b8a338473898ff5d012f890eb0df06f66a8e2f";
+      flake = false;
+    };
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -14,15 +22,26 @@
       self,
       nixpkgs,
       nixos-hardware,
+      rio-src,
+      rust-overlay,
     }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
+      rustPkgs = import nixpkgs {
+        inherit system;
+        overlays = [ (import rust-overlay) ];
+      };
+      rio = pkgs.callPackage ./packages/rio.nix {
+        src = rio-src;
+        rustToolchain = rustPkgs.rust-bin.stable."1.96.1".minimal;
+      };
     in
     {
       nixosModules.zfsbootmenu = import ./modules/zfsbootmenu.nix;
       nixosConfigurations.framework = nixpkgs.lib.nixosSystem {
         inherit system;
+        specialArgs = { inherit rio; };
         modules = [
           self.nixosModules.zfsbootmenu
           nixos-hardware.nixosModules.framework-intel-core-ultra-series1
@@ -30,7 +49,10 @@
         ];
       };
       formatter.${system} = pkgs.nixfmt-tree;
-      packages.${system}.installer = pkgs.nixos-install-tools;
+      packages.${system} = {
+        installer = pkgs.nixos-install-tools;
+        inherit rio;
+      };
       checks.${system} = {
         boot-environment = import ./tests/boot-environment.nix {
           inherit pkgs;

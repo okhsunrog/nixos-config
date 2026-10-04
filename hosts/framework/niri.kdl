@@ -27,7 +27,7 @@ spawn-at-startup "swaybg" "-c" "#2e3440"
 prefer-no-csd
 
 binds {
-    Mod+Return { spawn "foot"; }
+    Mod+Return { spawn "rio"; }
     Mod+D { spawn "fuzzel"; }
     Mod+E { spawn "nautilus"; }
     Mod+Q { close-window; }

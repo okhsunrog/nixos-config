@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, rio, ... }:
 {
   imports = [ ./hardware.nix ];
 
@@ -82,6 +82,7 @@
   zramSwap.enable = true;
   zramSwap.memoryPercent = 25;
   environment.systemPackages = with pkgs; [
+    rio
     git
     vim
     firefox

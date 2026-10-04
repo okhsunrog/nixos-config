@@ -43,3 +43,18 @@ Current build logs are `/tmp/nixos-framework-current.log` and
 `/tmp/nixos-be-test-recovery.log`. Both builds finished successfully. The physical
 installation log is `/tmp/nixos-framework-install.log`; the initial wrapper
 stopped at its symlink-permission assertion, which was corrected and rerun.
+
+## Personal Rio terminal
+
+- Rio is pinned to `okhsunrog/rio` commit
+  `11b8a338473898ff5d012f890eb0df06f66a8e2f`, matching the local Arch build,
+  with Rust 1.96.1 and X11, Wayland, WGPU and audio enabled.
+- The Rio package and complete laptop system built successfully. All 223
+  frontend tests passed, including `base_layout_key_follows_pc101_position`
+  and `alternate_keys_payload_fields` from the kitty keyboard patch.
+- The packaged binary runs and reports `rioterm 0.5.28`; desktop integration,
+  man page and the separate terminfo output are installed by the package.
+- Niri configuration validation passed with Super+Enter launching Rio.
+  Foot remains installed as a fallback.
+- Build log: `/tmp/nixos-rio-final-build.log`. No graphical Rio session on the
+  physical NixOS system has been tested yet.

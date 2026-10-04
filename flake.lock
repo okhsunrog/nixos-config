@@ -36,10 +36,49 @@
         "type": "github"
       }
     },
+    "rio-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790266420,
+        "narHash": "sha256-80/gK4eNXpDZMsdH3PucQ+iTPw7dAY014q/St+vLn/U=",
+        "owner": "okhsunrog",
+        "repo": "rio",
+        "rev": "11b8a338473898ff5d012f890eb0df06f66a8e2f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "okhsunrog",
+        "repo": "rio",
+        "rev": "11b8a338473898ff5d012f890eb0df06f66a8e2f",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "nixos-hardware": "nixos-hardware",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "rio-src": "rio-src",
+        "rust-overlay": "rust-overlay"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791101754,
+        "narHash": "sha256-y/GF+9B0t0TZ0nQiSRMqDXpr76yT7sdDbS/3GNLhzkE=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "dbc715a4b7c0ace63b9769a032d1dd34cd89e5bd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
       }
     }
   },
