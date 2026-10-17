@@ -1,6 +1,9 @@
 { pkgs, rio, ... }:
 {
-  imports = [ ./hardware.nix ];
+  imports = [
+    ./hardware.nix
+    ./secureboot.nix
+  ];
 
   networking.hostName = "nova-nixos";
   networking.hostId = "00bab10c";
@@ -13,10 +16,11 @@
   };
   console.keyMap = "ru";
 
-  boot.loader.zfsbootmenu = {
-    enable = true;
-    rootDataset = "novafs/nixos0/root";
-    keyFile = "/etc/zfs/zroot.key";
+  boot.loader.zbm-rs.enable = true;
+  boot.initrd.secrets."/etc/zfs/zroot.key" = "/etc/zfs/zroot.key";
+  boot.initrd.systemd.services.zfs-import-novafs = {
+    requires = [ "initrd-nixos-copy-secrets.service" ];
+    after = [ "initrd-nixos-copy-secrets.service" ];
   };
   boot.zfs.requestEncryptionCredentials = [ "novafs" ];
   boot.kernelParams = [

@@ -23,6 +23,12 @@ git -c safe.directory="$repo" -C "$repo" diff --cached --quiet
 [[ $(zfs get -H -o value encryptionroot "$pool") == "$pool" ]]
 [[ $(zfs get -H -o value keystatus "$pool") == available ]]
 [[ -r /etc/zfs/zroot.key ]]
+for file in /var/lib/sbctl/keys/db/db.key /var/lib/sbctl/keys/db/db.pem \
+            /var/lib/zbm-secureboot/ima/ima.key /var/lib/zbm-secureboot/ima/ima.pem \
+            /etc/systemd/tpm2-pcr-signature.json /etc/systemd/tpm2-pcr-public-key.pem; do
+    [[ -s $file ]]
+done
+[[ -d /var/lib/zbm-rs-public/framework-modules ]]
 if zfs list -H "$prefix" >/dev/null 2>&1; then
     echo "Refusing to reuse $prefix. Inspect an interrupted installation manually." >&2
     exit 1
@@ -45,7 +51,7 @@ zfs create -u -o mountpoint=/ -o canmount=noauto "$prefix/root"
 zfs create -u -o mountpoint=none "$prefix/data"
 zfs create -u -o mountpoint=/home -o canmount=noauto "$prefix/data/home"
 mkdir -p "$target"
-mount -t zfs -o zfsutil "$prefix/root" "$target"
+mount -i -t zfs -o zfsutil "$prefix/root" "$target"
 cleanup() {
     # Only our new BE's mounts. Never export the running host pool.
     if mountpoint -q "$target/home"; then umount "$target/home"; fi
@@ -53,9 +59,18 @@ cleanup() {
 }
 trap cleanup EXIT
 mkdir "$target/home"
-mount -t zfs -o zfsutil "$prefix/data/home" "$target/home"
+mount -i -t zfs -o zfsutil "$prefix/data/home" "$target/home"
 install -d -m 0700 "$target/etc/zfs" "$target/etc/nixos/secrets"
 install -m 000 /etc/zfs/zroot.key "$target/etc/zfs/zroot.key"
+install -d -m 0700 "$target/var/lib/secureboot"
+install -m 0600 /var/lib/sbctl/keys/db/db.key "$target/var/lib/secureboot/db.key"
+install -m 0600 /var/lib/zbm-secureboot/ima/ima.key "$target/var/lib/secureboot/ima.key"
+install -m 0644 /var/lib/sbctl/keys/db/db.pem "$target/var/lib/secureboot/db.pem"
+install -m 0644 /var/lib/zbm-secureboot/ima/ima.pem "$target/var/lib/secureboot/ima.pem"
+install -d "$target/etc/systemd" "$target/var/lib/zbm-rs-public"
+install -m 0644 /etc/systemd/tpm2-pcr-signature.json "$target/etc/systemd/tpm2-pcr-signature.json"
+install -m 0644 /etc/systemd/tpm2-pcr-public-key.pem "$target/etc/systemd/tpm2-pcr-public-key.pem"
+cp -aL /var/lib/zbm-rs-public/framework-modules "$target/var/lib/zbm-rs-public/"
 umask 077
 for user in root okhsunrog; do
     getent shadow "$user" | cut -d: -f2 > "$target/etc/nixos/secrets/$user-password-hash"
@@ -72,9 +87,10 @@ find "$target/etc/nixos" -mindepth 1 -maxdepth 1 -type d ! -name secrets -exec c
 [[ $(zpool get -H -o value bootfs "$pool") == "$default_before" ]]
 [[ $(zfs get -H -o value normalization "$prefix/root") == none ]]
 [[ $(zfs get -H -o value utf8only "$prefix/root") == off ]]
-[[ -s $target/boot/vmlinuz-nixos && -s $target/boot/initramfs-nixos.img ]]
-[[ $(stat -Lc %a "$target/boot/initramfs-nixos.img") == 600 ]]
+bundle="$target/boot/zbm-rs/nixos/$(basename "$system")"
+[[ -s $bundle/kernel && -s $bundle/initrd && -s $bundle/prepared.json ]]
+[[ $(stat -Lc %a "$bundle/initrd") == 600 ]]
 "$repo/scripts/verify-framework.sh" "$target"
 zfs snapshot -r "$prefix@fresh-install"
 sync -f "$target"
-echo "Installed $prefix/root; existing bootfs is unchanged. Reboot manually and select it in ZFSBootMenu."
+echo "Installed $prefix/root; existing bootfs is unchanged. Reboot manually and select it in zbm-rs."

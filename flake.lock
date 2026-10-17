@@ -1,5 +1,22 @@
 {
   "nodes": {
+    "insyde-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792263512,
+        "narHash": "sha256-nXMSbPWGk8684J1stZN2nVLxHdXz5F7tEH+jb5oIm5c=",
+        "owner": "okhsunrog",
+        "repo": "linux-okhsunrog",
+        "rev": "9b8a40b1d56df13a463892a580465ca943bdb9ad",
+        "type": "github"
+      },
+      "original": {
+        "owner": "okhsunrog",
+        "repo": "linux-okhsunrog",
+        "rev": "9b8a40b1d56df13a463892a580465ca943bdb9ad",
+        "type": "github"
+      }
+    },
     "nixos-hardware": {
       "inputs": {
         "nixpkgs": [
@@ -36,6 +53,22 @@
         "type": "github"
       }
     },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1791179034,
+        "narHash": "sha256-Ni0LBydzaCi8oek12r4mVreuFHqYlM1eTD6SfiENKfw=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "494ce7fd23ff6a5dff39e1fb11e9b6f2ac74bf25",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "rio-src": {
       "flake": false,
       "locked": {
@@ -55,10 +88,13 @@
     },
     "root": {
       "inputs": {
+        "insyde-src": "insyde-src",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
         "rio-src": "rio-src",
-        "rust-overlay": "rust-overlay"
+        "rust-overlay": "rust-overlay",
+        "signed-modules": "signed-modules",
+        "zbm-rs": "zbm-rs"
       }
     },
     "rust-overlay": {
@@ -78,6 +114,37 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "signed-modules": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1,
+        "narHash": "sha256-kCQVty2rOa3kyccvVwwCIfsgIFp2O7HisWiWIJUbqfI=",
+        "path": "/var/lib/zbm-rs-public/framework-modules",
+        "type": "path"
+      },
+      "original": {
+        "path": "/var/lib/zbm-rs-public/framework-modules",
+        "type": "path"
+      }
+    },
+    "zbm-rs": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1792266580,
+        "narHash": "sha256-r98zcUk4PzxALbETZu8H4VL6gqBTPvSkvVWgaGyQ0UU=",
+        "owner": "okhsunrog",
+        "repo": "zbm-rs",
+        "rev": "95156ef25473f6c38694b33f1e44800f3d310c10",
+        "type": "github"
+      },
+      "original": {
+        "owner": "okhsunrog",
+        "repo": "zbm-rs",
         "type": "github"
       }
     }

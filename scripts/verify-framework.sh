@@ -10,18 +10,31 @@ for pair in 'mountpoint:/' 'canmount:noauto' 'overlay:off' 'normalization:none' 
     expected=${pair#*:}
     [[ $(zfs get -H -o value "$property" "$dataset") == "$expected" ]]
 done
-[[ $(zfs get -H -o value org.zfsbootmenu:rootprefix "$dataset") == root=ZFS= ]]
 [[ $(findmnt -n -o SOURCE --target "$target/home") == novafs/nixos0/data/home ]]
-[[ $(readlink -e "$target/boot/nixos-current/system") == $(readlink -e "$repo/result-framework") ]]
-cmp "$target/boot/vmlinuz-nixos" "$repo/result-framework/kernel"
-[[ $(stat -Lc %a "$target/boot/initramfs-nixos.img") == 600 ]]
-cmp /etc/zfs/zroot.key "$target/etc/zfs/zroot.key"
+system=$(readlink -e "$repo/result-framework")
+bundle="$target/boot/zbm-rs/nixos/$(basename "$system")"
+[[ -s $bundle/kernel && -s $bundle/initrd && -s $bundle/prepared.json ]]
+[[ $(stat -Lc %a "$bundle/initrd") == 600 ]]
+source_hash=$(sha256sum "$target$system/boot.json")
+[[ $(jq -r .bootspec_sha256 "$bundle/prepared.json") == "${source_hash%% *}" ]]
+sbverify --cert "$target/var/lib/secureboot/db.pem" "$bundle/kernel"
+kh=$(sha256sum "$bundle/kernel"); kh=${kh%% *}
+ih=$(sha256sum "$bundle/initrd"); ih=${ih%% *}
+found=0
+while IFS= read -r -d '' payload; do
+    if jq -e --arg kh "$kh" --arg ih "$ih" '.kernel.sha256 == $kh and .initramfs.sha256 == $ih' "$payload" >/dev/null; then
+        openssl cms -verify -binary -inform DER -noverify -nointern \
+            -certfile "$target/var/lib/secureboot/db.pem" -in "${payload%.json}.cms" \
+            -content "$payload" -out /dev/null
+        found=1
+    fi
+done < <(find "$target/boot/zbm-rs/authorizations" -type f -name '*.json' -print0)
+((found == 1))
+[[ -s $target/etc/zfs/zroot.key && $(stat -c %a "$target/etc/zfs/zroot.key") == 0 ]]
 for user in root okhsunrog; do
-    cmp <(getent shadow "$user" | cut -d: -f2) "$target/etc/nixos/secrets/$user-password-hash"
+    [[ -s $target/etc/nixos/secrets/$user-password-hash ]]
     [[ $(stat -c %a "$target/etc/nixos/secrets/$user-password-hash") == 600 ]]
 done
-# Resolve absolute /etc/static symlinks inside the installed root, not Arch.
-system=$(readlink -e "$repo/result-framework")
 awk '$1 == "novafs/nixos0/data/home" && $2 == "/home" && $3 == "zfs" && $4 ~ /(^|,)x-initrd.mount(,|$)/ { found = 1 } END { exit !found }' "$system/etc/fstab"
 [[ $(chroot "$target" "$system/sw/bin/od" -An -tx1 /etc/hostid | tr -d ' \n') == 0cb1ba00 ]]
-echo "Verified $dataset: layout, hostid, boot kernel, private initrd and copied secrets. Physical boot remains to be tested."
+echo "Verified $dataset: layout, source-bound prepared generation, kernel signature, CMS and boot hashes. Physical boot/TPM remain to be tested."

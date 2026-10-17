@@ -1,8 +1,10 @@
 # Framework NixOS boot environment
 
 NixOS 26.05 with niri on the Framework Laptop 13 (Intel Core Ultra Series 1).
-Installs into `novafs/nixos0/root`, alongside the existing Arch/Gentoo systems.
-The existing ZFSBootMenu EFI application remains responsible for booting.
+Installs into `novafs/nixos0/root`, alongside Arch. NixOS uses native zbm-rs
+generation discovery and owner-signed boot artifacts. The existing ZFSBootMenu
+remains the default firmware choice for Arch; no NixOS compatibility publisher
+for ZFSBootMenu is installed.
 
 ## Layout
 
@@ -35,13 +37,18 @@ nix build .#installer --out-link result-installer
 nix build .#checks.x86_64-linux.boot-environment --out-link result-vm-test
 ```
 
-The VM test uses a disposable encrypted ZFS disk, installs a minimal system,
-boots it through a ZBM-style kexec handoff, publishes an updated generation,
-then boots a clone of the original snapshot. It checks the actual root dataset,
-the original system marker, hostid, home mount, and absence of foreign-BE mounts.
-It also boots with a normal user and checks that its home was created on the
-home dataset, without hidden directories beneath `/home` on the root dataset.
-This is not yet an end-to-end UEFI/ZFSBootMenu or physical laptop test.
+The native zbm-rs VM check uses a disposable encrypted ZFS disk. It installs
+through the real NixOS bootloader hook, appends runtime secrets, checks early
+home mounting and a normal user's home, tests publication failure with a missing
+secret, updates a generation, and boots the original root's snapshot clone.
+Separate zbm-rs signed-OVMF scenarios exercise protected NixOS and Arch handoff.
+VM success does not establish physical laptop, firmware or TPM acceptance.
+
+The `signed-modules` input is deliberately a local, public artifact at
+`/var/lib/zbm-rs-public/framework-modules`. It contains owner-signed kernel,
+ZFS and Insyde-recovery modules and an exact kernel-derivation manifest. Preserve
+this input or regenerate it with `scripts/sign-framework-modules.sh`; private
+keys are runtime files and never part of the input or Nix store.
 
 ## Install on the laptop
 
@@ -57,7 +64,8 @@ future rebuilds; update them deliberately when changing passwords.
 If installation fails, the datasets are preserved for inspection; the script
 will refuse a second run. Do not destroy or overwrite them blindly.
 
-After installation, manually select `novafs/nixos0/root` in ZFSBootMenu. Check
+After installation, manually choose the zbm-rs EFI entry, then select
+`novafs/nixos0/root` and its prepared NixOS generation. Check
 Wi-Fi, graphics, audio, brightness and suspend/resume on the actual laptop.
 
 ## niri
@@ -76,26 +84,38 @@ Rust 1.96.1. Foot remains installed as a fallback terminal.
 
 ## Rebuild and recovery
 
-On NixOS: `sudo nixos-rebuild boot --flake /etc/nixos#framework`. Reboot to use
-the new generation. The publisher copies the kernel and initramfs, appends
-runtime secrets, and atomically switches `/boot/nixos-current` to a matching
-bundle. Only one kernel/initramfs pair is exposed to ZBM. The current closure
-has a Nix GC root. Obsolete bundles under `/boot/nixos-generations` are retained
-for inspection; they are not extra menu entries.
+On NixOS: `sudo nixos-rebuild boot --flake /etc/nixos#framework`. The upstream
+zbm-rs NixOS module reads the standard Bootspec, copies its kernel and initramfs,
+appends runtime secrets, and signs the resulting kernel, final initramfs and
+exact native plan. The original store paths and Bootspec are never modified.
+Prepared generations and owner authorizations live under `/boot/zbm-rs`.
+Generation links are source-Bootspec-bound and restored on publication failure;
+per-system GC roots retain their closures. Old bundles are retained for explicit
+cleanup. There is no `/boot/nixos-current`, fake stable init path, kernel alias
+or command line in ZFS properties.
 
-The ZBM property uses a stable `init=/boot/nixos-current/system/init` path.
-The generation-specific store path lives in the filesystem snapshot. An initrd
-generator mounts the dataset passed as `root=ZFS=...`, allowing snapshot clones
-in the same pool rather than silently booting the original dataset.
+Owner EFI/authorization and IMA keys live in root-only `/var/lib/secureboot`.
+The OS kernel and all modules use the same explicit owner trust. A changed kernel
+must match the signed module input exactly: the build stops if they differ.
+After deliberately updating the kernel inputs, run
+`sudo scripts/sign-framework-modules.sh` before rebuilding. The helper builds
+the matching unsigned aggregate, signs and verifies a public copy outside Nix,
+then refreshes only the local signed-module lock input. This is a key operation
+outside derivations, not a disabled signature check or an unsigned fallback.
+
+The OS retains native systemd TPM/SRK/NvPCR services and receives the installed
+loader's signed PCR policy/public key through its runtime-secret appender.
+Updating the EFI image requires refreshing this policy before preparing the next
+OS generation. NixOS generation installation itself does not rebuild the loader,
+change firmware entries, reset the TPM, or change Arch's boot files.
 
 Root recovery does not roll back `/home`. A clone uses the same configured home
-dataset; make a separate clone and update its configuration if home isolation
-is needed. ZBM command-line properties are not frozen in ZFS snapshots, so
-generation-specific kernel parameter changes may need manual adjustment when
-booting an old snapshot. The selected root and matching init closure are handled
-by this module, but arbitrary historic parameter changes are not.
+dataset; make a separate clone and update its configuration if home isolation is
+needed. A trusted test snapshot must contain the complete prepared generation,
+its authorization and matching OS PCR policy. Older pre-migration snapshots are
+retained and are not silently authorized.
 
 To recover from Arch, explicitly mount the desired root with
-`mount -t zfs -o zfsutil novafs/nixos0/root /mnt/nixos`, then its home at
+`sudo mount -i -t zfs -o zfsutil novafs/nixos0/root /mnt/nixos`, then its home at
 `/mnt/nixos/home`. Unmount only those mounts when finished; do not export the
 pool used by the running Arch system.
