@@ -1,6 +1,7 @@
 # Framework NixOS boot environment
 
-NixOS 26.05 with niri on the Framework Laptop 13 (Intel Core Ultra Series 1).
+NixOS unstable with KDE Plasma 6.8 on the Framework Laptop 13
+(Intel Core Ultra Series 1).
 Installs into `novafs/nixos0/root`, alongside Arch. NixOS uses native zbm-rs
 generation discovery and owner-signed boot artifacts. The existing ZFSBootMenu
 remains the default firmware choice for Arch; no NixOS compatibility publisher
@@ -68,19 +69,25 @@ After installation, manually choose the zbm-rs EFI entry, then select
 `novafs/nixos0/root` and its prepared NixOS generation. Check
 Wi-Fi, graphics, audio, brightness and suspend/resume on the actual laptop.
 
-## niri
+## KDE Plasma
 
-The greetd/tuigreet login starts `niri-session`. Defaults are in
-`hosts/framework/niri.kdl`: Super+Enter Rio, Super+D launcher, Super+E
-files, Super+H/J/K/L focus, Super+Q close, Super+Escape lock, Caps switches
-US/Russian. The system includes foot, fuzzel, waybar, mako, swaylock, Firefox,
-PipeWire, Bluetooth and the recommended portals.
+Plasma Login Manager provides the graphical login, with Plasma as the default
+session. The system includes Konsole, Dolphin, KDE authentication agent and
+portals, Firefox, Neovim, PipeWire and Bluetooth. Neovim is the default editor;
+`vi` and `vim` are aliases to it. Caps switches between US and Russian layouts.
+The previous niri configuration remains in the source tree for reference.
 
-Rio is built from `okhsunrog/rio` commit
-`11b8a338473898ff5d012f890eb0df06f66a8e2f`, matching the Arch personal build.
-It includes the non-Latin kitty keyboard/binding fix and active-tab title fix.
-The source and Rust toolchain input are pinned in `flake.lock`; the compiler is
-Rust 1.96.1. Foot remains installed as a fallback terminal.
+`nixpkgs` follows `nixos-unstable`, pinned by `flake.lock`; refresh it with
+`nix flake update nixpkgs`. The October 15, 2026 pin provides Plasma 6.8.0.
+`system.stateVersion` stays at `26.05` to preserve existing state conventions.
+The separately pinned, owner-trusted kernel and signed module tree remain
+independent of the desktop package update.
+
+The former niri desktop packages (Rio, Foot, fuzzel, waybar, mako, swaybg,
+swaylock, Nautilus, xwayland-satellite, wl-clipboard, brightnessctl, playerctl
+and pavucontrol) are no longer installed explicitly. Plasma supplies desktop,
+clipboard, brightness, media and audio controls. The Rio and Rust overlay
+flake inputs have been removed.
 
 ## Rebuild and recovery
 

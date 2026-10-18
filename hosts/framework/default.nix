@@ -1,4 +1,4 @@
-{ pkgs, rio, ... }:
+{ pkgs, ... }:
 {
   imports = [
     ./hardware.nix
@@ -44,22 +44,15 @@
     neededForBoot = true;
   };
 
-  programs.niri.enable = true;
-  systemd.user.services.polkit-agent = {
-    description = "Polkit authentication agent";
-    wantedBy = [ "niri.service" ];
-    after = [ "niri.service" ];
-    partOf = [ "niri.service" ];
-    serviceConfig = {
-      ExecStart = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
-      Restart = "on-failure";
-    };
-  };
-  services.greetd = {
+  services.desktopManager.plasma6.enable = true;
+  services.displayManager.plasma-login-manager.enable = true;
+  services.displayManager.defaultSession = "plasma";
+  programs.neovim = {
     enable = true;
-    settings.default_session.command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --cmd niri-session";
+    defaultEditor = true;
+    viAlias = true;
+    vimAlias = true;
   };
-  environment.etc."niri/config.kdl".source = ./niri.kdl;
   services.pipewire = {
     enable = true;
     alsa.enable = true;
@@ -68,7 +61,6 @@
   };
   security.rtkit.enable = true;
   hardware.bluetooth.enable = true;
-  services.blueman.enable = true;
   users.users.okhsunrog = {
     isNormalUser = true;
     uid = 1000;
@@ -86,22 +78,10 @@
   zramSwap.enable = true;
   zramSwap.memoryPercent = 25;
   environment.systemPackages = with pkgs; [
-    rio
+    kdePackages.konsole
+    kdePackages.dolphin
     git
-    vim
     firefox
-    foot
-    fuzzel
-    waybar
-    mako
-    swaybg
-    swaylock
-    wl-clipboard
-    brightnessctl
-    playerctl
-    pavucontrol
-    nautilus
-    xwayland-satellite
   ];
   nix.settings.experimental-features = [
     "nix-command"
