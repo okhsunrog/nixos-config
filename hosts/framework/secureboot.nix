@@ -90,6 +90,7 @@ in
     bootPkgs.openssl
     bootPkgs.zstd
     bootPkgs.sbsigntool
+    bootPkgs.sbctl
   ];
   boot.loader.zbm-rs.signing = {
     enable = true;

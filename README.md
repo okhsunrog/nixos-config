@@ -114,6 +114,14 @@ cleanup. There is no `/boot/nixos-current`, fake stable init path, kernel alias
 or command line in ZFS properties.
 
 Owner EFI/authorization and IMA keys live in root-only `/var/lib/secureboot`.
+The provisioning also retains the enrolled PK/KEK/db hierarchy and owner GUID in
+`/var/lib/sbctl`; `sbctl` is available for deliberate owner key management. Its
+Arch-specific registered-file database is not imported. The PCR signing key is
+`/var/lib/secureboot/pcr.key`, with its public key in `pcr-public.pem`. These are
+runtime files outside Git and the Nix store. The existing native generation hook
+uses `db.key` and `ima.key`; the PCR key is for explicitly preparing new loader
+policies, not routine generation rebuilding. Arch helper scripts may still need
+their filesystem/tool paths adapted before use in NixOS.
 The OS kernel and all modules use the same explicit owner trust. A changed kernel
 must match the signed module input exactly: the build stops if they differ.
 After deliberately updating the kernel inputs, run
