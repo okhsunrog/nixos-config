@@ -1,5 +1,8 @@
 { pkgs, ... }:
 {
+  # Plasma enables the Orca screen reader by default; not part of this host set.
+  services.orca.enable = false;
+
   # First migration slice: applications actually present on the Arch host.
   # Project-specific SDKs/libraries belong in project devShells.
   environment.systemPackages = with pkgs; [
