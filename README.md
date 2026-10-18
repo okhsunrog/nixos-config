@@ -4,8 +4,9 @@ NixOS unstable with KDE Plasma 6.8 on the Framework Laptop 13
 (Intel Core Ultra Series 1).
 Installs into `novafs/nixos0/root`, alongside Arch. NixOS uses native zbm-rs
 generation discovery and owner-signed boot artifacts. The existing ZFSBootMenu
-remains the default firmware choice for Arch; no NixOS compatibility publisher
-for ZFSBootMenu is installed.
+remains available as a fallback for Arch; zbm-rs is now the first firmware choice
+after physical boot testing. No NixOS compatibility publisher for ZFSBootMenu
+is installed.
 
 ## Layout
 
@@ -76,6 +77,17 @@ session. The system includes Konsole, Dolphin, KDE authentication agent and
 portals, Firefox, Neovim, PipeWire and Bluetooth. Neovim is the default editor;
 `vi` and `vim` are aliases to it. Caps switches between US and Russian layouts.
 The previous niri configuration remains in the source tree for reference.
+
+`hosts/framework/daily-tools.nix` contains the first Arch migration package set:
+Chrome/Firefox, AyuGram, KeePassXC, Nextcloud, LibreOffice, KDE utilities, editors,
+Git, Rust/Python/JS/Go tools, Android/serial utilities and network diagnostics.
+It enables direnv, nix-ld, Wireshark, Docker and libvirt/virt-manager, with explicit
+user groups. Docker images/volumes, VMs, browser profiles and other user data are
+not imported by adding these packages. Rustup toolchains and project development
+libraries still need their own setup; the package list is not a universal SDK.
+Zen, the personal Floppa/Arctern builds and corporate VPN/agent configuration
+remain separate migration work. VK Teams is intentionally left to the browser.
+CAD, Haskell, Julia, Logseq and Claude applications are excluded from this set.
 
 `nixpkgs` follows `nixos-unstable`, pinned by `flake.lock`; refresh it with
 `nix flake update nixpkgs`. The October 15, 2026 pin provides Plasma 6.8.0.

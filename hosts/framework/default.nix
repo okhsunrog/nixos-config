@@ -3,6 +3,7 @@
   imports = [
     ./hardware.nix
     ./secureboot.nix
+    ./daily-tools.nix
   ];
 
   networking.hostName = "nova-nixos";
