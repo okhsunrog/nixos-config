@@ -7,6 +7,14 @@
       url = "github:NixOS/nixos-hardware";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    host-secrets = {
+      url = "git+https://fgj.okhsunrog.dev/okhsunrog/nixos-secrets.git?ref=main";
+      flake = false;
+    };
     zbm-rs.url = "github:okhsunrog/zbm-rs";
     signed-modules = {
       url = "path:/var/lib/zbm-rs-public/framework-modules";
@@ -23,6 +31,8 @@
       self,
       nixpkgs,
       nixos-hardware,
+      sops-nix,
+      host-secrets,
       zbm-rs,
       signed-modules,
       insyde-src,
@@ -40,20 +50,25 @@
             zbm-rs
             signed-modules
             insyde-src
+            host-secrets
             ;
         };
         modules = [
+          sops-nix.nixosModules.sops
           zbm-rs.nixosModules.default
           nixos-hardware.nixosModules.framework-intel-core-ultra-series1
           ./hosts/framework
         ];
       };
       formatter.${system} = pkgs.nixfmt-tree;
-      packages.${system} = {
+      packages.${system} = (import ./packages/corporate.nix { inherit pkgs; }) // {
         installer = pkgs.nixos-install-tools;
+        flyline = import ./packages/flyline.nix { inherit pkgs; };
+        inherit (pkgs) age sops;
       };
       checks.${system} = {
         boot-environment = zbm-rs.checks.${system}.native-nixos;
+        secrets = import ./tests/secrets.nix { inherit pkgs sops-nix; };
       };
     };
 }

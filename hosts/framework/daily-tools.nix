@@ -1,4 +1,7 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
+let
+  flyline = import ../../packages/flyline.nix { inherit pkgs; };
+in
 {
   # Plasma enables the Orca screen reader by default; not part of this host set.
   services.orca.enable = false;
@@ -57,6 +60,8 @@
     zoxide
     btop
     fastfetch
+    flyline
+    starship
     jq
     yq-go
     tree
@@ -89,6 +94,12 @@
     traceroute
     tcpdump
   ];
+
+  programs.bash.interactiveShellInit = lib.mkAfter ''
+    if [[ $TERM != linux && ''${FLYLINE:-1} != 0 ]]; then
+      enable flyline 2>/dev/null || enable -f ${flyline}/lib/libflyline.so flyline
+    fi
+  '';
 
   programs.direnv = {
     enable = true;

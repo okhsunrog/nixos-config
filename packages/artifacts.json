@@ -1,0 +1,17 @@
+{
+  "nac-agent": {
+    "version": "1.0.8",
+    "url": "https://fgj.okhsunrog.dev/api/packages/private-artifacts/generic/nac-agent/1.0.8/nac-agent-v1.0.8-amd64.tar.gz",
+    "sha256": "a2f8d331258cfb8a5cba364316ac2b4699f07225fe3f020f3020784b38223053"
+  },
+  "fleet-orbit": {
+    "version": "1.22.1",
+    "url": "https://fgj.okhsunrog.dev/api/packages/private-artifacts/generic/fleet-orbit/1.22.1/fleet-orbit-1.22.1-runtime.tar.gz",
+    "sha256": "692e7a46542f7222648f5a3296bc9b4edfb59e57cebd2caca646f0a5e1504794"
+  },
+  "vkey-client": {
+    "version": "1.1.10",
+    "url": "https://fgj.okhsunrog.dev/api/packages/private-artifacts/generic/vkey-client/1.1.10/vkey-x509-client-linux-v1.1.10.tar.gz",
+    "sha256": "589786eb7792f6916ba93751b0c6f080e4d1fb221d4c2b687ee475cb6eb4a3f5"
+  }
+}

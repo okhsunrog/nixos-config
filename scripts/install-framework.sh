@@ -23,6 +23,10 @@ git -c safe.directory="$repo" -C "$repo" diff --cached --quiet
 [[ $(zfs get -H -o value encryptionroot "$pool") == "$pool" ]]
 [[ $(zfs get -H -o value keystatus "$pool") == available ]]
 [[ -r /etc/zfs/zroot.key ]]
+age_key=${SOPS_AGE_KEY_FILE:-/var/lib/sops-nix/key.txt}
+[[ -s $age_key ]]
+vault=${NIXOS_SECRETS_DIR:-$(dirname -- "$repo")/nixos-secrets}
+[[ -d $vault/.git && -s $vault/framework.enc.json ]]
 for file in /var/lib/sbctl/keys/db/db.key /var/lib/sbctl/keys/db/db.pem \
             /var/lib/zbm-secureboot/ima/ima.key /var/lib/zbm-secureboot/ima/ima.pem \
             /etc/systemd/tpm2-pcr-signature.json /etc/systemd/tpm2-pcr-public-key.pem; do
@@ -60,7 +64,9 @@ cleanup() {
 trap cleanup EXIT
 mkdir "$target/home"
 mount -i -t zfs -o zfsutil "$prefix/data/home" "$target/home"
-install -d -m 0700 "$target/etc/zfs" "$target/etc/nixos/secrets"
+install -d -m 0700 "$target/etc/zfs" "$target/var/lib/sops-nix"
+install -d -m 0755 "$target/etc/nixos"
+install -m 0000 "$age_key" "$target/var/lib/sops-nix/key.txt"
 install -m 000 /etc/zfs/zroot.key "$target/etc/zfs/zroot.key"
 install -d -m 0700 "$target/var/lib/secureboot"
 install -m 0600 /var/lib/sbctl/keys/db/db.key "$target/var/lib/secureboot/db.key"
@@ -71,19 +77,18 @@ install -d "$target/etc/systemd" "$target/var/lib/zbm-rs-public"
 install -m 0644 /etc/systemd/tpm2-pcr-signature.json "$target/etc/systemd/tpm2-pcr-signature.json"
 install -m 0644 /etc/systemd/tpm2-pcr-public-key.pem "$target/etc/systemd/tpm2-pcr-public-key.pem"
 cp -aL /var/lib/zbm-rs-public/framework-modules "$target/var/lib/zbm-rs-public/"
-umask 077
-for user in root okhsunrog; do
-    getent shadow "$user" | cut -d: -f2 > "$target/etc/nixos/secrets/$user-password-hash"
-    [[ -s $target/etc/nixos/secrets/$user-password-hash ]]
-done
 export NIX_CONFIG='experimental-features = nix-command flakes'
 "$installer/bin/nixos-install" --root "$target" --system "$system" \
     --no-root-passwd --no-channel-copy
 
-# Keep a clean source copy for rebuilding, without ignored files or .git.
-git -c safe.directory="$repo" -C "$repo" archive HEAD | tar -x -C "$target/etc/nixos"
-chmod 0755 "$target/etc/nixos"
-find "$target/etc/nixos" -mindepth 1 -maxdepth 1 -type d ! -name secrets -exec chmod 0755 {} +
+# Work as the normal user after boot; /etc/nixos is only an alias.
+code=$target/home/okhsunrog/code
+install -d -m0755 -o1000 -g1000 "$code"
+rsync -a --chown=1000:1000 --exclude='/result*' --exclude='/.work' \
+    --exclude='/secrets' "$repo/" "$code/nixos-config/"
+rsync -a --chown=1000:1000 "$vault/" "$code/nixos-secrets/"
+rmdir "$target/etc/nixos"
+ln -s /home/okhsunrog/code/nixos-config "$target/etc/nixos"
 [[ $(zpool get -H -o value bootfs "$pool") == "$default_before" ]]
 [[ $(zfs get -H -o value normalization "$prefix/root") == none ]]
 [[ $(zfs get -H -o value utf8only "$prefix/root") == off ]]

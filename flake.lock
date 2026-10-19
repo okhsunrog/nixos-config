@@ -1,5 +1,22 @@
 {
   "nodes": {
+    "host-secrets": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792369927,
+        "narHash": "sha256-svC6X9bFv32ADzZQQVXsHkj0P+h1KfDBOrarcNaKlBE=",
+        "ref": "main",
+        "rev": "31a38c4859e2ab166e63291c865cbdc4cabcd704",
+        "revCount": 3,
+        "type": "git",
+        "url": "https://fgj.okhsunrog.dev/okhsunrog/nixos-secrets.git"
+      },
+      "original": {
+        "ref": "main",
+        "type": "git",
+        "url": "https://fgj.okhsunrog.dev/okhsunrog/nixos-secrets.git"
+      }
+    },
     "insyde-src": {
       "flake": false,
       "locked": {
@@ -71,10 +88,12 @@
     },
     "root": {
       "inputs": {
+        "host-secrets": "host-secrets",
         "insyde-src": "insyde-src",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
         "signed-modules": "signed-modules",
+        "sops-nix": "sops-nix",
         "zbm-rs": "zbm-rs"
       }
     },
@@ -89,6 +108,26 @@
       "original": {
         "path": "/var/lib/zbm-rs-public/framework-modules",
         "type": "path"
+      }
+    },
+    "sops-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792056300,
+        "narHash": "sha256-YU1LjDe1o2Ymg5zEiCHbmMXLkDCtxHQRiVqZ3nC5GGk=",
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "rev": "44931708c62937c2b1bf7953902989fa5bb9ee1b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "type": "github"
       }
     },
     "zbm-rs": {

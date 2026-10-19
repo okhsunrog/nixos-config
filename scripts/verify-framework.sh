@@ -31,10 +31,9 @@ while IFS= read -r -d '' payload; do
 done < <(find "$target/boot/zbm-rs/authorizations" -type f -name '*.json' -print0)
 ((found == 1))
 [[ -s $target/etc/zfs/zroot.key && $(stat -c %a "$target/etc/zfs/zroot.key") == 0 ]]
-for user in root okhsunrog; do
-    [[ -s $target/etc/nixos/secrets/$user-password-hash ]]
-    [[ $(stat -c %a "$target/etc/nixos/secrets/$user-password-hash") == 600 ]]
-done
+[[ -s $target/var/lib/sops-nix/key.txt ]]
+[[ $(stat -c %a "$target/var/lib/sops-nix/key.txt") == 0 ]]
+[[ $(stat -c %u "$target/var/lib/sops-nix/key.txt") == 0 ]]
 awk '$1 == "novafs/nixos0/data/home" && $2 == "/home" && $3 == "zfs" && $4 ~ /(^|,)x-initrd.mount(,|$)/ { found = 1 } END { exit !found }' "$system/etc/fstab"
 [[ $(chroot "$target" "$system/sw/bin/od" -An -tx1 /etc/hostid | tr -d ' \n') == 0cb1ba00 ]]
 echo "Verified $dataset: layout, source-bound prepared generation, kernel signature, CMS and boot hashes. Physical boot/TPM remain to be tested."

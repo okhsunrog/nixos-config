@@ -57,11 +57,21 @@ keys are runtime files and never part of the input or Nix store.
 Commit the validated source first, then run `sudo scripts/install-framework.sh`.
 It refuses to reuse an existing `novafs/nixos0`, limits itself to new datasets,
 does not export the active pool, and leaves pool features, EFI files, firmware
-entries and `bootfs` untouched. Root and `okhsunrog` password hashes and the ZFS
-key are copied directly into the target's private files, never printed or
-placed in Git/the Nix store. Existing user UID/GID is 1000.
-The password-hash files in `/etc/nixos/secrets` are the declarative source for
-future rebuilds; update them deliberately when changing passwords.
+entries and `bootfs` untouched. The ZFS key and a separately restored age key
+are copied directly into the target's private files, never printed or placed
+in Git/the Nix store. Existing user UID/GID is 1000. Password hashes now come
+from the SOPS-encrypted, pinned private `host-secrets` input, before user setup.
+Old `/etc/nixos/secrets` files are retained only for rollback to earlier
+generations; they are no longer the active configuration source.
+
+See [secrets and private artifacts](docs/secrets-and-artifacts.md) for the two
+Forgejo repositories, package authentication, bootstrap and signing-key recovery.
+
+The working Git repositories live in `/home/okhsunrog/code/nixos-config` and
+`/home/okhsunrog/code/nixos-secrets`, owned by UID/GID 1000. `/etc/nixos` is a
+symlink to the first repository, not a second source copy. Edit/commit/push as
+the normal user and use sudo only for provisioning secrets or applying the
+system. Root uses a read-only Forgejo token, not copied user SSH keys.
 
 If installation fails, the datasets are preserved for inspection; the script
 will refuse a second run. Do not destroy or overwrite them blindly.
@@ -88,6 +98,12 @@ libraries still need their own setup; the package list is not a universal SDK.
 Zen, the personal Floppa/Arctern builds and corporate VPN/agent configuration
 remain separate migration work. VK Teams is intentionally left to the browser.
 CAD, Haskell, Julia, Logseq and Claude applications are excluded from this set.
+
+Starship is installed for the existing user Bash configuration. Flyline uses
+the official 1.10.0 release with its published archive checksum, not the older
+personal fork. Its Nix-patched loadable library is enabled for interactive Bash
+outside `TERM=linux`; `FLYLINE=0 bash` retains plain readline. Existing user
+Starship configuration is left to the home migration.
 
 `nixpkgs` follows `nixos-unstable`, pinned by `flake.lock`; refresh it with
 `nix flake update nixpkgs`. The October 15, 2026 pin provides Plasma 6.8.0.

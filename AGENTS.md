@@ -13,3 +13,12 @@ Ultra Series 1, installed as a new BE in an existing encrypted ZFS pool.
 - Distinguish module/VM tests, actual ZBM firmware boot, and physical hardware checks.
 - Use clear commits without generated-by, assistant or session attribution.
 - Never publish review comments or replies; draft them in chat instead.
+- Keep the working repositories in the owner's home, owned by the normal user.
+  Git commits/pushes use that user's credentials; do not duplicate SSH keys into
+  root's account. `/etc/nixos` links to the working configuration.
+- `host-secrets` is a pinned private Git input containing SOPS ciphertext only.
+  The age private key is root-owned mode 000 at `/var/lib/sops-nix/key.txt`, with
+  an independent owner-managed password-manager backup. Never add it to Git.
+- Private package downloads use the root-only runtime netrc. Never embed tokens
+  or enrollment credentials into Nix expressions, URLs, derivations or archives.
+- Keep Home Manager out of this migration until explicitly requested.

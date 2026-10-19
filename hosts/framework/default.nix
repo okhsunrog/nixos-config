@@ -4,6 +4,7 @@
     ./hardware.nix
     ./secureboot.nix
     ./daily-tools.nix
+    ./secrets.nix
   ];
 
   networking.hostName = "nova-nixos";
@@ -71,11 +72,8 @@
       "networkmanager"
       "video"
     ];
-    # Supplied outside Git during installation; account stays locked if absent.
-    hashedPasswordFile = "/etc/nixos/secrets/okhsunrog-password-hash";
   };
   users.groups.okhsunrog.gid = 1000;
-  users.users.root.hashedPasswordFile = "/etc/nixos/secrets/root-password-hash";
   zramSwap.enable = true;
   zramSwap.memoryPercent = 25;
   environment.systemPackages = with pkgs; [
