@@ -26,6 +26,7 @@ in
     (pkgs.makeDesktopItem {
       name = "zen";
       desktopName = "Zen Browser";
+      noDisplay = true;
       exec = "zen-beta %U";
       icon = "zen-browser";
       categories = [
