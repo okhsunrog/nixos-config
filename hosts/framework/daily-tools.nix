@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   zen-browser,
@@ -153,6 +154,17 @@ in
 
   virtualisation.docker.enable = true;
   virtualisation.libvirtd.enable = true;
+  # The pool already protects this host key at rest. Libvirt's automatic
+  # TPM policy picks the loader's PCR signing key, which does not authorize
+  # this OS's current PCR 11 value after kexec.
+  systemd.services.virt-secret-init-encryption.serviceConfig.ExecStart = lib.mkForce (
+    pkgs.writeShellScript "libvirt-init-encryption" ''
+      set -euo pipefail
+      ${pkgs.coreutils}/bin/dd if=/dev/urandom status=none bs=32 count=1 |
+        ${config.systemd.package}/bin/systemd-creds encrypt --with-key=host \
+          --name=secrets-encryption-key - /var/lib/libvirt/secrets/secrets-encryption-key
+    ''
+  );
   programs.virt-manager.enable = true;
   users.users.okhsunrog.extraGroups = [
     "dialout"

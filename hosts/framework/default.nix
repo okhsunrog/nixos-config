@@ -21,6 +21,23 @@
   networking.networkmanager.enable = true;
   time.timeZone = "Europe/Moscow";
   i18n.defaultLocale = "en_US.UTF-8";
+  # Plasma's migrated per-user format settings use British English.
+  i18n.supportedLocales = [
+    "en_US.UTF-8/UTF-8"
+    "en_GB.UTF-8/UTF-8"
+    "ru_RU.UTF-8/UTF-8"
+  ];
+  security.sudo.extraRules = [
+    {
+      users = [ "okhsunrog" ];
+      commands = [
+        {
+          command = "ALL";
+          options = [ "NOPASSWD" ];
+        }
+      ];
+    }
+  ];
   services.xserver.xkb = {
     layout = "us,ru";
     options = "grp:caps_toggle,terminate:ctrl_alt_bksp";
