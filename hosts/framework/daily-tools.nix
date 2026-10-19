@@ -21,24 +21,8 @@ in
   # Project-specific SDKs/libraries belong in project devShells.
   environment.systemPackages = with pkgs; [
     zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.beta
-    # Preserve existing launchers/default MIME associations from Arch.
+    # Keep the command name used by shell scripts; use the package's desktop ID.
     (pkgs.writeShellScriptBin "zen-browser" ''exec zen-beta "$@"'')
-    (pkgs.makeDesktopItem {
-      name = "zen";
-      desktopName = "Zen Browser";
-      noDisplay = true;
-      exec = "zen-beta %U";
-      icon = "zen-browser";
-      categories = [
-        "Network"
-        "WebBrowser"
-      ];
-      mimeTypes = [
-        "text/html"
-        "x-scheme-handler/http"
-        "x-scheme-handler/https"
-      ];
-    })
     # Daily desktop, documents and communication. Firefox is in default.nix.
     google-chrome
     ayugram-desktop
