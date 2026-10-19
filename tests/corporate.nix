@@ -8,9 +8,14 @@ let
     getent passwd tester >/dev/null || exit 1
     exec ${pkgs.coreutils}/bin/sleep infinity
   '';
+  nacSleeper = pkgs.writeShellScript "disposable-nac" ''
+    kreadconfig6 --version >/dev/null || exit 1
+    exec ${sleeper}
+  '';
   dummy = pkgs.runCommand "disposable-agents" { } ''
     mkdir -p $out/bin $out/libexec/fleet-orbit
     for name in nac-agent orbit osqueryd; do ln -s ${sleeper} $out/bin/$name; done
+    ln -sfn ${nacSleeper} $out/bin/nac-agent
     touch $out/libexec/fleet-orbit/{certs.pem,osquery.flags,tuf-metadata.json}
   '';
   scriptProbe = pkgs.writeShellScript "corporate-archive-probe" ''

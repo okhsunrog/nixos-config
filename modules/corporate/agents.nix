@@ -262,6 +262,7 @@ lib.mkIf cfg.enable {
       path = lib.mkBefore [
         firewall
         pkgs.shadow
+        pkgs.kdePackages.kconfig
       ];
       wants = [ "corporate-screenlock-watch.path" ];
       after = [
