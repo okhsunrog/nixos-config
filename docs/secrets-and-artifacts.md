@@ -104,11 +104,12 @@ environment during a package install would not suffice: the original DEB would
 still be a readable Nix store input. Private registry authentication protects
 downloads, but installed binaries are locally readable in the Nix store.
 
-The package recipes are available as `.#nac-agent`, `.#fleet-orbit` and
-`.#vkey-client`. They do not execute vendor installers, enroll the laptop or
-enable services. Migration of the confined services, DBus filtering, audit,
-split DNS and existing VKey state remains a separate step; installing the raw
-binaries must not accidentally start unconfined corporate agents.
+The package recipes are available as `.#nac-agent`, `.#fleet-orbit`,
+`.#vkey-client` and `.#vkey-runtime`. Building a package does not execute a vendor
+installer or enroll the laptop. The Framework host explicitly enables the
+[corporate workstation module](corporate-workstation.md): confined services,
+D-Bus filtering, audit, script archival, split DNS and VKey user integration.
+Existing enrollment and TPM state are imported separately outside the Nix store.
 
 Orbit updater state, NAC registration and the TPM PKCS#11 database are mutable
 state and need separate backups. ZFS pool unlock material and TPM-sealed

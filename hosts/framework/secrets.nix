@@ -24,8 +24,7 @@
         # private Git input without embedding credentials in its URL.
         path = "/root/.netrc";
       };
-      # Provision the registration credential, but do not start an unconfined
-      # agent before its NixOS service and confinement have been migrated.
+      # Consumed only by the confined Orbit service, outside the Nix store.
       orbit-environment.mode = "0600";
     };
   };

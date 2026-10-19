@@ -119,6 +119,11 @@ flake inputs have been removed.
 
 ## Rebuild and recovery
 
+The Framework host enables the [corporate workstation integration](docs/corporate-workstation.md):
+VKey/Barbos, split DNS, TPM access, confined NAC/Orbit, read-only D-Bus, audit and
+script archival. Issued keys and registration state stay outside the Nix store.
+The corporate VM check uses only disposable agents and a virtual TPM.
+
 On NixOS: `sudo nixos-rebuild boot --flake /etc/nixos#framework`. The upstream
 zbm-rs NixOS module reads the standard Bootspec, copies its kernel and initramfs,
 appends runtime secrets, and signs the resulting kernel, final initramfs and

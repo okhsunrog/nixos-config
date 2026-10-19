@@ -5,6 +5,7 @@
     ./secureboot.nix
     ./daily-tools.nix
     ./secrets.nix
+    ./corporate.nix
   ];
 
   networking.hostName = "nova-nixos";
@@ -80,7 +81,6 @@
     kdePackages.konsole
     kdePackages.dolphin
     git
-    firefox
   ];
   nix.settings.experimental-features = [
     "nix-command"
