@@ -21,6 +21,9 @@ let
     };
 in
 rec {
+  # This is deployment metadata (API URL), not a session or credential.
+  # Keep it in the private registry as selected by the owner.
+  floppa-deployment = fetchArtifact "floppa-deployment";
   nac-agent = pkgs.stdenvNoCC.mkDerivation {
     pname = "nac-agent";
     inherit (artifacts.nac-agent) version;

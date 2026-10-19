@@ -167,3 +167,6 @@ To recover from Arch, explicitly mount the desired root with
 `sudo mount -i -t zfs -o zfsutil novafs/nixos0/root /mnt/nixos`, then its home at
 `/mnt/nixos/home`. Unmount only those mounts when finished; do not export the
 pool used by the running Arch system.
+
+The [Arch home migration notes](docs/arch-home-migration.md) describe the
+independent home clone, shared datasets, Zen profile and imported Floppa state.

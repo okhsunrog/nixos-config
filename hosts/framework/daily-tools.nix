@@ -1,14 +1,42 @@
-{ pkgs, lib, ... }:
+{
+  pkgs,
+  lib,
+  zen-browser,
+  ...
+}:
 let
   flyline = import ../../packages/flyline.nix { inherit pkgs; };
 in
 {
   # Plasma enables the Orca screen reader by default; not part of this host set.
   services.orca.enable = false;
+  environment.sessionVariables.LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
+  networking.networkmanager.plugins = with pkgs; [
+    networkmanager-openvpn
+    networkmanager-openconnect
+  ];
 
   # First migration slice: applications actually present on the Arch host.
   # Project-specific SDKs/libraries belong in project devShells.
   environment.systemPackages = with pkgs; [
+    zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.beta
+    # Preserve existing launchers/default MIME associations from Arch.
+    (pkgs.writeShellScriptBin "zen-browser" ''exec zen-beta "$@"'')
+    (pkgs.makeDesktopItem {
+      name = "zen";
+      desktopName = "Zen Browser";
+      exec = "zen-beta %U";
+      icon = "zen-browser";
+      categories = [
+        "Network"
+        "WebBrowser"
+      ];
+      mimeTypes = [
+        "text/html"
+        "x-scheme-handler/http"
+        "x-scheme-handler/https"
+      ];
+    })
     # Daily desktop, documents and communication. Firefox is in default.nix.
     google-chrome
     ayugram-desktop

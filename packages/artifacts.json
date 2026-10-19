@@ -13,5 +13,10 @@
     "version": "1.1.10",
     "url": "https://fgj.okhsunrog.dev/api/packages/private-artifacts/generic/vkey-client/1.1.10/vkey-x509-client-linux-v1.1.10.tar.gz",
     "sha256": "589786eb7792f6916ba93751b0c6f080e4d1fb221d4c2b687ee475cb6eb4a3f5"
+  },
+  "floppa-deployment": {
+    "version": "1",
+    "url": "https://fgj.okhsunrog.dev/api/packages/private-artifacts/generic/floppa-deployment/1/deployment.json",
+    "sha256": "e699f09e6e286ebf1a497b10889cb2651b0363b4e8a097b7bc2ebc4061aee89a"
   }
 }

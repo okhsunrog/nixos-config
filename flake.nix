@@ -24,6 +24,14 @@
       url = "github:okhsunrog/linux-okhsunrog/9b8a40b1d56df13a463892a580465ca943bdb9ad";
       flake = false;
     };
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    floppa-vpn = {
+      url = "github:okhsunrog/floppa-vpn";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -36,6 +44,8 @@
       zbm-rs,
       signed-modules,
       insyde-src,
+      zen-browser,
+      floppa-vpn,
     }:
     let
       system = "x86_64-linux";
@@ -51,6 +61,8 @@
             signed-modules
             insyde-src
             host-secrets
+            zen-browser
+            floppa-vpn
             ;
         };
         modules = [
@@ -58,6 +70,7 @@
           zbm-rs.nixosModules.default
           nixos-hardware.nixosModules.framework-intel-core-ultra-series1
           ./hosts/framework
+          floppa-vpn.nixosModules.default
         ];
       };
       formatter.${system} = pkgs.nixfmt-tree;

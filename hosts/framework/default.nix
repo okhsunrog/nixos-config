@@ -6,6 +6,7 @@
     ./daily-tools.nix
     ./secrets.nix
     ./corporate.nix
+    ./floppa.nix
   ];
 
   networking.hostName = "nova-nixos";
@@ -45,6 +46,16 @@
     options = [ "zfsutil" ];
     # Account activation creates home directories before switch-root.
     neededForBoot = true;
+  };
+  fileSystems."/home/okhsunrog/Nextcloud" = {
+    device = "novafs/nextcloud";
+    fsType = "zfs";
+    options = [ "zfsutil" ];
+  };
+  fileSystems."/home/okhsunrog/tmp_zfs" = {
+    device = "novafs/tmp_zfs_home";
+    fsType = "zfs";
+    options = [ "zfsutil" ];
   };
 
   services.desktopManager.plasma6.enable = true;
