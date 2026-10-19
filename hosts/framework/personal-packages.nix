@@ -19,6 +19,7 @@ in
 {
   environment.systemPackages = [
     (tangleaf.lib.mkPackage pkgs)
+    (pkgs.callPackage ../../packages/chatgpt.nix { })
     orcaSlicer
   ];
 }
