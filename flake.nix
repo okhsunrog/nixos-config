@@ -111,6 +111,9 @@
         novpn = import ./tests/novpn.nix { inherit pkgs; };
         secrets = import ./tests/secrets.nix { inherit pkgs sops-nix; };
         corporate = import ./tests/corporate.nix { inherit pkgs; };
+        pantum-duplex = import ./tests/pantum-duplex.nix {
+          pkgs = self.nixosConfigurations.framework.pkgs;
+        };
       };
     };
 }
