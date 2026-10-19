@@ -8,6 +8,7 @@
     ./arctern.nix
     ./ayugram-plengine.nix
     ./peripherals.nix
+    ./power.nix
     ./secrets.nix
     ./corporate.nix
     ./floppa.nix
@@ -57,8 +58,6 @@
   boot.kernelParams = [
     "zswap.enabled=0"
     "zfs.zfs_arc_max=8589934592"
-    "mem_sleep_default=deep"
-    "acpi_osi=\"!Windows 2020\""
     "efi_pstore.pstore_disable=0"
   ];
 
