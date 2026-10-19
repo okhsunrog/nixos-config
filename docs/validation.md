@@ -21,10 +21,34 @@ The same VM then installed NixOS into an encrypted ZFS pool, booted the
 original and updated generations via kexec, and booted a root snapshot clone.
 The complete test passed in 77.62 seconds. A modified installer store artifact
 initially failed NAR verification; it was rebuilt from its derivation and
-verified before the successful rerun. Physical Framework NvPCR initialization
-with the new package remains to be checked after reboot.
+verified before the successful rerun. The physical Framework boot at 08:04
+initialized hardware/cryptsetup/login successfully with 262.1; optional verity
+was skipped for NV capacity, matching Arch.
+
+The known Insyde enumeration issue still affects the root-stage EFI view:
+recovery exposed 132 entries in initrd, but userspace sees the original 15
+after switch-root. Late measured-OS services therefore skip their checks and
+sbctl cannot determine the firmware state from efivarfs. Early NvPCR success
+does not establish that this remaining EFI-view integration issue is fixed.
 Logs and the adapted test fixture are under
 `~/tmp_zfs/codex_tmp/nixos-tpm-arch-20261019/`.
+
+## Corporate services after migration, 2026-10-19
+
+The real NAC needed `getent` and `kreadconfig6` in its restricted service PATH.
+The service now provides both, retaining its AppArmor/mount restrictions.
+Orbit's pre-start setup now preserves updater-owned executable symlinks instead
+of resetting them to the relative seed links on each restart. This stopped the
+repeated early-update exit loop once the corporate server became reachable.
+
+Corporate VM tests passed with startup command probes and preservation of both
+updater links, alongside the existing isolation, audit, DNS and VKey checks.
+On the laptop, NAC and Orbit run without restarts, osqueryd and its extensions
+are running, and NAC reports successful osquery/Fleet/firewall/screen-lock
+checks. Barbos connects using the TPM-backed certificate, installs split DNS,
+and routes Jira/Fleet traffic through the corporate tunnel while Floppa stays
+active. Jira returned HTTP 302 to its login page. Firmware EFI-view recovery
+after switch-root remains separate from these successful checks.
 
 ## Native protected boot installation, 2026-10-17
 
