@@ -39,6 +39,23 @@ let
     "login"
     "verity"
   ];
+  # Match Arch's loader ordering in BOTH stages: measured-OS conditions may
+  # cache a negative result if they run before the firmware view is repaired.
+  efiRecoveryOrdering = {
+    wants = [ "tpm2.target" ];
+    before = [
+      "systemd-udevd.service"
+      "systemd-udev-trigger.service"
+      "tpm2.target"
+      "systemd-tpm2-setup-early.service"
+      "systemd-tpm2-setup.service"
+      "systemd-pcrphase-initrd.service"
+      "systemd-pcrosseparator.service"
+      "systemd-pcrextend.socket"
+      "systemd-pcrlock.socket"
+      "systemd-report-sign-tpm2.socket"
+    ];
+  };
 in
 {
   assertions = [
@@ -114,20 +131,12 @@ in
       (name: {
         source = insyde-src + "/modules/insyde-efivarfs${lib.removePrefix "/etc" name}";
       });
-  boot.initrd.systemd.services.systemd-modules-load = {
-    wants = [ "tpm2.target" ];
-    before = [
-      "systemd-udevd.service"
-      "systemd-udev-trigger.service"
-      "tpm2.target"
-      "systemd-tpm2-setup-early.service"
-      "systemd-tpm2-setup.service"
-      "systemd-pcrphase-initrd.service"
-      "systemd-pcrosseparator.service"
-      "systemd-pcrextend.socket"
-      "systemd-pcrlock.socket"
-      "systemd-report-sign-tpm2.socket"
-    ];
+  systemd.services.systemd-modules-load = efiRecoveryOrdering;
+  boot.initrd.systemd.services.systemd-modules-load = efiRecoveryOrdering // {
+    # NixOS replaces the efivarfs view across switch-root. Leave its repaired
+    # entries in place, but unload the one-shot recovery module at initrd stop
+    # so the root-stage loader actually runs its init function again.
+    serviceConfig.ExecStop = "${config.boot.initrd.systemd.package.kmod}/bin/modprobe -r insyde_efivarfs";
   };
   boot.initrd.systemd.services.systemd-pcrphase-initrd.after = [
     "systemd-modules-load.service"

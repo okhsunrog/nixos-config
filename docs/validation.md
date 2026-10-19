@@ -25,12 +25,28 @@ verified before the successful rerun. The physical Framework boot at 08:04
 initialized hardware/cryptsetup/login successfully with 262.1; optional verity
 was skipped for NV capacity, matching Arch.
 
-The known Insyde enumeration issue still affects the root-stage EFI view:
-recovery exposed 132 entries in initrd, but userspace sees the original 15
-after switch-root. Late measured-OS services therefore skip their checks and
-sbctl cannot determine the firmware state from efivarfs. Early NvPCR success
-does not establish that this remaining EFI-view integration issue is fixed.
-Logs and the adapted test fixture are under
+The first NixOS integration repaired 132 EFI entries in initrd, but the root
+stage saw only the original 15. The one-shot module stayed loaded, so the root
+loader did not run its recovery function again. Unlike Arch, the NixOS root
+loader also lacked the ordering before measured-OS conditions.
+
+Both loaders now use the same ordering. The initrd loader unloads only the
+recovery module when it stops; this does not remove its in-memory EFI entries
+or write firmware. The root loader can therefore run recovery again against
+its own efivarfs view before TPM/udev checks. The kernel and signed module are
+unchanged. An encrypted-ZFS VM passed the exact unload/reload command lifecycle
+using the harmless in-tree `dummy` module, followed by updated-generation and
+snapshot-clone boots (105.93 seconds). QEMU does not reproduce the Insyde bug.
+
+On the running laptop at 08:44, reloading the signed recovery module restored
+132 entries. `sbctl status` reported Secure Boot enabled and Setup Mode disabled;
+a fresh measured-OS condition passed. PID 1 retained its earlier negative EFI
+condition cache, so a daemon re-exec was necessary before late TPM setup and
+product-ID measurement could run. Both then completed successfully, retaining
+the existing SRK; NAC reported `secure_boot_enabled=true` at 08:47. Both VPNs
+remained connected. Automatic recovery on the next physical boot still requires
+verification. Logs and adapted test fixtures are under
+`~/tmp_zfs/codex_tmp/nixos-efi-recovery-20261019/` and
 `~/tmp_zfs/codex_tmp/nixos-tpm-arch-20261019/`.
 
 ## Corporate services after migration, 2026-10-19
@@ -47,8 +63,17 @@ On the laptop, NAC and Orbit run without restarts, osqueryd and its extensions
 are running, and NAC reports successful osquery/Fleet/firewall/screen-lock
 checks. Barbos connects using the TPM-backed certificate, installs split DNS,
 and routes Jira/Fleet traffic through the corporate tunnel while Floppa stays
-active. Jira returned HTTP 302 to its login page. Firmware EFI-view recovery
-after switch-root remains separate from these successful checks.
+active. Jira returned HTTP 302 to its login page. See the separate EFI recovery
+acceptance above for the initially negative Secure Boot check and its repair.
+
+VKey browser acceptance after migration: the vendor PDF specifies NSS PKCS#11
+registration, not a browser extension. Chrome's `~/.pki/nssdb` and the existing
+Zen/Firefox profiles reference the stable home symlink to the patched Nix
+runtime. NSS loads the provider and sees the Intel TPM token `vkey`; both running
+Chrome and Zen processes map that same Nix library. No missing Arch library
+path was found. This proves module loading/token visibility, not an authenticated
+web login: a new mTLS login still requires the owner's PIN. Fingerprint unlock
+is disabled and no fingerprints are enrolled.
 
 ## Native protected boot installation, 2026-10-17
 
