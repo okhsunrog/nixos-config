@@ -18,5 +18,10 @@
     "version": "1",
     "url": "https://fgj.okhsunrog.dev/api/packages/private-artifacts/generic/floppa-deployment/1/deployment.json",
     "sha256": "e699f09e6e286ebf1a497b10889cb2651b0363b4e8a097b7bc2ebc4061aee89a"
+  },
+  "pantum-bm1800w-print": {
+    "version": "1.1.188",
+    "url": "https://fgj.okhsunrog.dev/api/packages/private-artifacts/generic/pantum-bm1800w-print/1.1.188/pantum-bm1800w-print-1.1.188-x86_64.tar.gz",
+    "sha256": "06a27dd2a720b28a252f35c5bfcd66ed4e28c2fe51110d9f07014884658d2d78"
   }
 }

@@ -7,6 +7,7 @@
     ./personal-packages.nix
     ./arctern.nix
     ./ayugram-plengine.nix
+    ./peripherals.nix
     ./secrets.nix
     ./corporate.nix
     ./floppa.nix

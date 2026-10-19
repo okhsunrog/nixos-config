@@ -1,0 +1,36 @@
+# udev rules for cameras supported by thermal-cat.
+#
+# Install with:
+#   sudo cp dist/udev/99-thermal-cat.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+#
+# These rules are not always required. On a desktop session systemd-logind
+# already grants the active seat user an ACL on /dev/video*, so thermal-cat
+# just works. You need these rules when that ACL is not granted, i.e.:
+#
+#   - running over SSH or from a non-seat session (systemd service, cron)
+#   - the user is not the active seat user
+#   - inside a container or sandbox that does not inherit the ACL
+#
+# Two nodes matter per camera:
+#
+#   - /dev/videoN     the V4L2 capture node, used to grab frames
+#   - /dev/bus/usb/*  the raw USB node, used by libusb for hotplug detection
+#
+# TAG+="uaccess" re-grants the logind ACL; GROUP="video" is the fallback for
+# sessions logind does not manage. Add yourself to the group if you rely on it:
+#   sudo usermod -aG video $USER      (log out and back in afterwards)
+#
+# The USB node is left world-readable (0664), which is the kernel default. That
+# is what libusb needs to enumerate devices for hotplug detection; tightening it
+# to 0660 would break hotplug for anyone not in the video group.
+
+# --- Infiray P2 Pro (and the Habotest HT820 clone) -------------------------
+SUBSYSTEM=="video4linux", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="5830", GROUP="video", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="video4linux", ATTRS{idVendor}=="0bda", ATTRS{idProduct}=="5840", GROUP="video", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTR{idVendor}=="0bda", ATTR{idProduct}=="5830", GROUP="video", MODE="0664", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTR{idVendor}=="0bda", ATTR{idProduct}=="5840", GROUP="video", MODE="0664", TAG+="uaccess"
+
+# --- Thermal Master P2 -----------------------------------------------------
+SUBSYSTEM=="video4linux", ATTRS{idVendor}=="3474", ATTRS{idProduct}=="4281", GROUP="video", MODE="0660", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTR{idVendor}=="3474", ATTR{idProduct}=="4281", GROUP="video", MODE="0664", TAG+="uaccess"

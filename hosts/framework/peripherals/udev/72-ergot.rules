@@ -1,0 +1,11 @@
+ # Ergot USB devices - match all PIDs for VID 16c0
+ # VID 16c0 is Van Ooijen Technische Informatica (DIY/hobby USB)
+
+ ACTION!="add|change", GOTO="ergot_rules_end"
+ SUBSYSTEM!="usb|tty|hidraw", GOTO="ergot_rules_end"
+
+ # All devices with VID 16c0 (any PID)
+ ATTRS{idVendor}=="16c0", MODE="660", GROUP="plugdev", TAG+="uaccess", ENV{ID_MM_DEVICE_IGNORE}="1"
+ATTRS{idVendor}=="1209", MODE="660", GROUP="plugdev", TAG+="uaccess", ENV{ID_MM_DEVICE_IGNORE}="1"
+
+ LABEL="ergot_rules_end"
