@@ -87,6 +87,13 @@
   services.desktopManager.plasma6.enable = true;
   services.displayManager.plasma-login-manager.enable = true;
   services.displayManager.defaultSession = "plasma";
+  programs.bash.interactiveShellInit = ''
+    if (( EUID == 0 )); then
+      HISTSIZE=100000
+      HISTFILESIZE=200000
+      shopt -s histappend
+    fi
+  '';
   programs.neovim = {
     enable = true;
     defaultEditor = true;
