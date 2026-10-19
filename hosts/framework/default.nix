@@ -7,7 +7,13 @@
     ./secrets.nix
     ./corporate.nix
     ./floppa.nix
+    ../../modules/novpn
   ];
+
+  services.novpn = {
+    enable = true;
+    user = "okhsunrog";
+  };
 
   networking.hostName = "nova-nixos";
   networking.hostId = "00bab10c";

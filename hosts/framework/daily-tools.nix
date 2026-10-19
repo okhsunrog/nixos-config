@@ -42,6 +42,7 @@ in
     ayugram-desktop
     keepassxc
     nextcloud-client
+    easyeffects
     libreoffice
     mpv
     kdePackages.ark
@@ -57,6 +58,7 @@ in
     zed-editor
     codex
     git-lfs
+    git-filter-repo
     delta
     gh
     glab
@@ -103,6 +105,8 @@ in
     which
     man-pages
     wl-clipboard
+    glib # gdbus for the existing Konsole theme watcher
+    kdePackages.qttools # qdbus for existing desktop scripts
 
     # Android/USB/serial work and network diagnosis. VPN profiles are separate.
     android-tools
@@ -135,6 +139,13 @@ in
   };
   # Downloaded toolchains/editor helpers may expect a conventional ELF loader.
   programs.nix-ld.enable = true;
+  # Native bindings in the migrated uv tools (D-Bus / desktop introspection).
+  programs.nix-ld.libraries = with pkgs; [
+    dbus
+    glib
+    libffi
+    gobject-introspection
+  ];
   programs.wireshark = {
     enable = true;
     package = pkgs.wireshark;

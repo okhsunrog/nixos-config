@@ -81,6 +81,7 @@
       };
       checks.${system} = {
         boot-environment = zbm-rs.checks.${system}.native-nixos;
+        novpn = import ./tests/novpn.nix { inherit pkgs; };
         secrets = import ./tests/secrets.nix { inherit pkgs sops-nix; };
         corporate = import ./tests/corporate.nix { inherit pkgs; };
       };
