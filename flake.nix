@@ -16,6 +16,7 @@
       flake = false;
     };
     zbm-rs.url = "github:okhsunrog/zbm-rs";
+    zbm-rescue.url = "github:okhsunrog/zbm-rs/4038ff09a44c674fc1b4b1126b0f21aa4d09706a";
     signed-modules = {
       url = "path:/var/lib/zbm-rs-public/framework-modules";
       flake = false;
@@ -58,6 +59,7 @@
       sops-nix,
       host-secrets,
       zbm-rs,
+      zbm-rescue,
       signed-modules,
       insyde-src,
       zen-browser,
@@ -78,6 +80,7 @@
         specialArgs = {
           inherit
             zbm-rs
+            zbm-rescue
             signed-modules
             insyde-src
             host-secrets

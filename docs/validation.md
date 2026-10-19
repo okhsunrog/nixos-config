@@ -219,3 +219,27 @@ stopped at its symlink-permission assertion, which was corrected and rerun.
   readable as enabled. TPM setup and PCR product services were active.
 - Automatic EFI-variable recovery through the next physical boot still requires
   a laptop reboot; VM checks and an in-place switch do not establish that result.
+
+## Independent EFI rescue, October 19, 2026
+
+- Main loader integration is pinned to `9909c0a`; rescue retains `4038ff0` and
+  its own pinned Nixpkgs/kernel/ZFS. Normal rebuilds never install rescue.
+- The OVMF EFI-install VM passed signed-main and unsigned-rescue installation,
+  independent main replacement, idempotence, signature refusals, temporary ESP
+  mounting and preservation of foreign files and existing boot order.
+- The encrypted ZFS native-install/generation/snapshot-clone VM passed. Rust
+  workspace tests, formatting and Clippy passed; host flake checks passed with
+  twelve signing/workflow regressions, including failure before EFI preparation.
+- The production rescue image booted to its menu and F4 shell in OVMF with
+  Secure Boot off. OVMF with enrolled firmware trust rejected the same unsigned
+  image when Secure Boot was on. The Insyde repair module is included for manual
+  use, without making rescue startup depend on Insyde firmware.
+- Rescue was installed first without changing any pre-existing EFI file. The
+  subsequent normal switch installed the main EFI and left rescue and foreign
+  EFI files unchanged. Existing firmware entries and order were preserved, with
+  the separate rescue entry appended. The pool bootfs was unchanged.
+- Main EFI signature, prepared-generation kernel/CMS/hashes and Bootspec binding
+  passed verification on the laptop. Secure Boot remained enabled, no system
+  units were failed, and the new generation was activated without a reboot.
+- Physical firmware boot, target TPM/PCR behavior after that boot, and physical
+  rescue acceptance remain to be checked manually.

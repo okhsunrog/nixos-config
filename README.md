@@ -156,13 +156,48 @@ cd ~/code/nixos-config
 Once this configuration is activated, `framework-rebuild` is the same command
 for the working repository at `/etc/nixos`; it can be called from any directory.
 
-The command builds a public signing plan and the unsigned kernel/module outputs
+The command builds public signing plans and the unsigned kernel/module outputs
 using your own Nix cache and Git credentials. It elevates only the module-signing
 step and system installation. It refreshes only `signed-modules` in `flake.lock`,
 then builds the complete system before changing the system profile. Normal
 configuration edits reuse the cached signed modules; changes to any module
 source, kernel or trust/signing inputs invalidate that cache. Build options can
 be passed after `--`, for example `boot -- --max-jobs 2 --cores 2`.
+
+It also builds the main Framework EFI image, signs its IMA policy and modules,
+and signs/verifies the final UKI outside the store. Prepared EFI images are
+cached under `/var/lib/zbm-rs-signing/loader`. The OS PCR policy is extended for
+the new UKI and the currently installed UKI before preparing the new generation;
+existing signatures remain available. Each system retains its exact EFI signing
+plan and build inputs. The bootloader hook installs that prepared EFI only after
+generation preparation succeeds, replacing `EFI/zbm-rs/zbm-rs.EFI` on the explicit
+ESP. Existing firmware entries and their order are preserved. `build` prepares
+the image and policy but does not write EFI files or change the system profile.
+
+### Independent rescue loader
+
+`zbm-rs (rescue)` uses `EFI/zbm-rs/rescue.EFI`, an unsigned image with
+`security.mode = "off"`, TPM support disabled in the loader and an ordinary kernel
+without forced lockdown/module-signature enforcement. Its source revision and
+Nixpkgs are pinned independently through `zbm-rescue`; ordinary system/input
+updates do not advance that source or overwrite its installed EFI file.
+
+Install or deliberately refresh it as the repository owner:
+
+```sh
+framework-rescue-update --max-jobs 2 --cores 2
+```
+
+To advance rescue, explicitly change the revision in `zbm-rescue.url`, refresh its
+lock with `nix flake update zbm-rescue`, and test/install it separately after the
+main loader has passed a physical boot. It is never updated by
+`framework-rebuild`. To use rescue, disable firmware Secure Boot temporarily and
+choose its separate EFI entry. The installer refuses to accept a signed rescue
+file. Recovery offers the loader shell and manual pool unlocking; it does not
+promise that TPM-dependent services inside NixOS work in this mode. Re-enable
+Secure Boot after repair. The existing ZFSBootMenu and foreign EFI files remain.
+
+### Signing and generation publication
 
 Signing uses root-only `/var/lib/zbm-rs-signing`, retains immutable public outputs
 and the public plan with Nix GC roots, and atomically replaces the real
@@ -195,8 +230,8 @@ The provisioning also retains the enrolled PK/KEK/db hierarchy and owner GUID in
 Arch-specific registered-file database is not imported. The PCR signing key is
 `/var/lib/secureboot/pcr.key`, with its public key in `pcr-public.pem`. These are
 runtime files outside Git and the Nix store. The existing native generation hook
-uses `db.key` and `ima.key`; the PCR key is for explicitly preparing new loader
-policies, not routine generation rebuilding. Arch helper scripts may still need
+uses `db.key` and `ima.key`; the preparation step uses the PCR key when authorizing
+the main loader's measurement. Arch helper scripts may still need
 their filesystem/tool paths adapted before use in NixOS.
 The OS kernel and all modules use the same explicit owner trust. A changed kernel
 must match the signed module input exactly: the build stops if they differ.
@@ -210,8 +245,9 @@ operation outside derivations, not an unsigned fallback.
 The OS retains native systemd TPM/SRK/NvPCR services and receives the installed
 loader's signed PCR policy/public key through its runtime-secret appender.
 Updating the EFI image requires refreshing this policy before preparing the next
-OS generation. NixOS generation installation itself does not rebuild the loader,
-change firmware entries, reset the TPM, or change Arch's boot files.
+OS generation. EFI construction and signing happen in the preparation step;
+generation installation consumes that prepared signed file. Neither step resets
+the TPM or changes Arch's boot files.
 
 Root recovery does not roll back `/home`. A clone uses the same configured home
 dataset; make a separate clone and update its configuration if home isolation is

@@ -222,6 +222,10 @@ class RebuildStages(unittest.TestCase):
             "scripts/sign-framework-modules.sh",
             'echo sign >> "$REBUILD_LOG"; exit "${FAIL_SIGN:-0}"',
         )
+        self.write(
+            "scripts/prepare-framework-loader.sh",
+            'echo prepare-efi >> "$REBUILD_LOG"; exit "${FAIL_EFI_SIGN:-0}"',
+        )
         self.write("bin/sudo", 'exec "$@"')
         self.write(
             "bin/nix",
@@ -230,6 +234,9 @@ echo "nix $*" >> "$REBUILD_LOG"
 if [[ $1 == build ]]; then
     if [[ $2 == *frameworkModuleSigningPlan ]]; then
         ln -sfn "$PWD/plan" result-module-signing
+    elif [[ $2 == *frameworkEfiPlan ]]; then
+        ln -sfn "$PWD/plan" result-efi-plan
+        exit "${FAIL_EFI_BUILD:-0}"
     else
         exit "${FAIL_BUILD:-0}"
     fi
@@ -272,6 +279,22 @@ fi
         self.assertIn("system.build.toplevel", log)
         self.assertNotIn("switch-to-configuration", log)
         self.assertNotIn("nix-env", log)
+
+    def test_failed_efi_build_prevents_preparation_and_system_build(self):
+        result = self.run_stage(FAIL_EFI_BUILD="44")
+        self.assertEqual(result.returncode, 44)
+        log = (self.root / "log").read_text()
+        self.assertNotIn("prepare-efi", log)
+        self.assertNotIn("system.build.toplevel", log)
+        self.assertNotIn("switch-to-configuration", log)
+
+    def test_failed_efi_signing_prevents_system_build(self):
+        result = self.run_stage(FAIL_EFI_SIGN="45")
+        self.assertEqual(result.returncode, 45)
+        log = (self.root / "log").read_text()
+        self.assertIn("prepare-efi", log)
+        self.assertNotIn("system.build.toplevel", log)
+        self.assertNotIn("switch-to-configuration", log)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@
     ./desktop.nix
     ./virtualisation.nix
     ./secureboot.nix
+    ./efi.nix
     ./daily-tools.nix
     ./personal-packages.nix
     ./arctern.nix

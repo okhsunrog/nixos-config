@@ -28,6 +28,9 @@ nix build "$base.system.build.frameworkModuleSigningPlan" \
 sudo "$repo/scripts/sign-framework-modules.sh" "$(readlink -e result-module-signing)"
 # Update only the public input, with the normal user's ownership/credentials.
 nix flake update signed-modules
+# Build with the owner's cache/credentials, then sign outside derivations.
+nix build "$base.system.build.frameworkEfiPlan" --out-link result-efi-plan "$@"
+sudo "$repo/scripts/prepare-framework-loader.sh" "$(readlink -e result-efi-plan)"
 nix build "$base.system.build.toplevel" --out-link result-framework "$@"
 system=$(readlink -e result-framework)
 if [[ $action == build ]]; then
