@@ -1,0 +1,3 @@
+# Release only KM003C vendor interface 0 for WebUSB; powerz hwmon is unavailable.
+# CDC serial and HID interfaces remain bound to their existing drivers.
+ACTION=="add|bind", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_interface", ATTRS{idVendor}=="5fc9", ATTRS{idProduct}=="0063", ATTR{bInterfaceNumber}=="00", DRIVER=="powerz", RUN+="/bin/sh -c 'echo -n %k > /sys/bus/usb/drivers/powerz/unbind'"
