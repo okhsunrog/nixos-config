@@ -75,6 +75,7 @@ in
     eza
     zoxide
     btop
+    htop
     fastfetch
     flyline
     starship
