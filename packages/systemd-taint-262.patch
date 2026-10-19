@@ -1,0 +1,22 @@
+# Rebase of Nixpkgs unmerged-/usr taint patch for systemd 262.1.
+--- a/src/core/taint.c
++++ b/src/core/taint.c
+@@ -41,17 +41,7 @@
+          * runtime should be tagged here. For stuff that is known during compilation, emit a warning in the
+          * configuration phase. */
+ 
+-        _cleanup_free_ char *bin = NULL, *usr_sbin = NULL, *var_run = NULL;
+-
+-        r = readlink_malloc("/bin", &bin);
+-        if (r != -ENOENT && (r < 0 || !PATH_IN_SET(bin, "usr/bin", "/usr/bin")))
+-                stage[n++] = "unmerged-usr";
+-
+-        /* Note that the check is different from default_PATH(), as we want to taint on uncanonical symlinks
+-         * too. */
+-        r = readlink_malloc("/usr/sbin", &usr_sbin);
+-        if (r != -ENOENT && (r < 0 || !PATH_IN_SET(usr_sbin, "bin", "/usr/bin")))
+-                stage[n++] = "unmerged-bin";
++        _cleanup_free_ char *var_run = NULL;
+ 
+         r = readlink_malloc("/var/run", &var_run);
+         if (r != -ENOENT && (r < 0 || !PATH_IN_SET(var_run, "../run", "/run")))

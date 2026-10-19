@@ -11,24 +11,11 @@ let
     system = "x86_64-linux";
     config.allowUnfree = true;
   };
-  # The pinned 26.05 module unconditionally backports systemd commit 266b3e5.
-  # 261.3 already contains it. Filter only that redundant patch at the package
-  # override boundary, retaining the original cached package and other patches.
-  systemd261 = bootPkgs.systemd // {
-    overrideAttrs =
-      override:
-      bootPkgs.systemd.overrideAttrs (
-        previous:
-        let
-          adjusted = override previous;
-        in
-        adjusted
-        // {
-          patches = builtins.filter (
-            patch: !(lib.hasSuffix "-postpone-d-bus-queue-dispatch.patch" (toString patch))
-          ) (adjusted.patches or previous.patches);
-        }
-      );
+  # Match Arch's signed-policy NvPCR API without updating the kernel or
+  # unrelated packages from the pinned boot package set.
+  systemd262 = import ../../packages/systemd-262.nix {
+    pkgs = bootPkgs;
+    inherit lib;
   };
   kernelPackages = import "${zbm-rs}/nix/security-kernel.nix" {
     pkgs = bootPkgs;
@@ -101,9 +88,9 @@ in
     authorityKey = "${state}/db.key";
     authorityCertificate = "${state}/db.pem";
   };
-  # Same systemd family as the loader, including native NvPCR services.
-  systemd.package = systemd261;
-  boot.initrd.systemd.package = bootPkgs.systemd;
+  # Use the same signed-policy NvPCR API as the existing Arch installation.
+  systemd.package = systemd262;
+  boot.initrd.systemd.package = systemd262;
   systemd.tpm2.enable = true;
   boot.initrd.systemd.tpm2 = {
     enable = true;

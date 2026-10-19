@@ -1,5 +1,31 @@
 # Validation status
 
+## Framework NvPCR compatibility, 2026-10-19
+
+Arch's last boot used systemd 262.1 and initialized the `hardware`,
+`cryptsetup` and `login` NvPCRs successfully. It skipped the optional `verity`
+NvPCR because the physical TPM's NV storage was full. NixOS's systemd 261.3
+tried to reuse those indices with the older write authorization scheme and
+failed with `File exists`. The old hwdb workaround is absent in Arch now.
+
+Both systems already have identical public PCR keys, signed `initrd` policies
+and NvPCR definitions. The fix uses systemd 262.1 in the NixOS initrd and
+userspace, retaining the kernel, module signatures, NvPCR indices and keys.
+The local package retains NixOS adaptations, rebasing its timezone/taint
+patches and removing patches/options made obsolete upstream in 262.
+
+An isolated swtpm test initialized four signed-policy NvPCRs and successfully
+extended `hardware`. Running 261.3 on those same indices reproduced the
+failure, while 262.1 could reuse them. No physical-host TPM was passed to QEMU.
+The same VM then installed NixOS into an encrypted ZFS pool, booted the
+original and updated generations via kexec, and booted a root snapshot clone.
+The complete test passed in 77.62 seconds. A modified installer store artifact
+initially failed NAR verification; it was rebuilt from its derivation and
+verified before the successful rerun. Physical Framework NvPCR initialization
+with the new package remains to be checked after reboot.
+Logs and the adapted test fixture are under
+`~/tmp_zfs/codex_tmp/nixos-tpm-arch-20261019/`.
+
 ## Native protected boot installation, 2026-10-17
 
 The installed system is now native zbm-rs, pinned to source `95156ef`.
