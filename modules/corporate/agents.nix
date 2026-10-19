@@ -39,6 +39,7 @@ let
   paths = with pkgs; [
     bash
     coreutils
+    getent
     findutils
     gnugrep
     gnused

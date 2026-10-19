@@ -2,7 +2,12 @@
 let
   corporate = import ../packages/corporate.nix { inherit pkgs; };
   # No enrollment, remote task or real credential is used in this VM.
-  sleeper = pkgs.writeShellScript "disposable-agent" "exec ${pkgs.coreutils}/bin/sleep infinity";
+  sleeper = pkgs.writeShellScript "disposable-agent" ''
+    # The vendor NAC resolves the desktop user's home through getent at startup.
+    # Keep this lookup in the service's PATH, matching the real agent contract.
+    getent passwd tester >/dev/null || exit 1
+    exec ${pkgs.coreutils}/bin/sleep infinity
+  '';
   dummy = pkgs.runCommand "disposable-agents" { } ''
     mkdir -p $out/bin $out/libexec/fleet-orbit
     for name in nac-agent orbit osqueryd; do ln -s ${sleeper} $out/bin/$name; done
