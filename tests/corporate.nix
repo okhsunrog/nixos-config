@@ -81,6 +81,14 @@ pkgs.testers.runNixOSTest {
     for unit in ("apparmor", "auditd", "audit-rules-nixos", "agent-script-archive", "corporate-agent-dbus", "nac-agent", "orbit", "firewalld", "systemd-resolved", "tpm2-abrmd"):
         machine.wait_for_unit(unit + ".service")
     machine.wait_for_unit("user@1000.service")
+    # A signed Orbit update moves the program links away from the seed cache.
+    # Restarting the service must preserve both updater-managed selections.
+    for program in ("orbit", "osqueryd"):
+        machine.succeed(f"mkdir -p /opt/orbit/bin/{program}/linux/updated; cp -L /opt/orbit/bin/{program}/{program} /opt/orbit/bin/{program}/linux/updated/{program}; ln -sfn linux/updated/{program} /opt/orbit/bin/{program}/{program}")
+    machine.succeed("systemctl restart orbit")
+    machine.wait_for_unit("orbit.service")
+    for program in ("orbit", "osqueryd"):
+        machine.succeed(f"test $(readlink /opt/orbit/bin/{program}/{program}) = linux/updated/{program}")
     user = "runuser -u tester -- env XDG_RUNTIME_DIR=/run/user/1000 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus "
     machine.succeed(user + "systemctl --user start vkey-runtime-setup")
     machine.succeed(user + "tpm2_getrandom 4 >/dev/null")

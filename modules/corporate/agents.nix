@@ -300,8 +300,13 @@ lib.mkIf cfg.enable {
             install -m0755 ${cfg.packages.fleet-orbit}/bin/"$program" "$target"
           fi
         done
-          ln -sfn linux/stable/orbit /opt/orbit/bin/orbit/orbit
-          ln -sfn linux/stable/osqueryd /opt/orbit/bin/osqueryd/osqueryd
+        for program in orbit osqueryd; do
+          # Orbit owns these links after a signed update. Only seed a missing
+          # entry; resetting it on restart would create an update loop.
+          if test ! -e "/opt/orbit/bin/$program/$program"; then
+            ln -sfn "linux/stable/$program" "/opt/orbit/bin/$program/$program"
+          fi
+        done
         for file in certs.pem osquery.flags tuf-metadata.json; do
           test -e "/opt/orbit/$file" || cp ${cfg.packages.fleet-orbit}/libexec/fleet-orbit/"$file" /opt/orbit/
           done
