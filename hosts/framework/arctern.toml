@@ -1,0 +1,55 @@
+# Arctern sender: NixOS is the primary system; Arch backups stay archived.
+state_dir = "/var/lib/arctern"
+socket = "/run/arctern/arctern.sock"
+
+[defaults]
+prefix = "arctern_"
+[defaults.snapshotting]
+interval = "15m"
+[defaults.pruning]
+# Local fade-out, same shape as the old zrepl grid.
+grid = "4x15m(keep=all) | 24x1h | 3x1d"
+
+# mira — один физический сервер, два маршрута (приоритет по порядку).
+# lan достижим только из домашней сети — его reachability и есть
+# признак "я дома": авто-репликация не чаще раза в день. wg достижим
+# отовсюду через WireGuard, но auto = false: только ручной Send now,
+# когда интернет позволяет. Курсоры/holds/история ключуются именем
+# пира (mira), маршруты — чистый транспорт.
+[[peers]]
+name = "mira"
+mode = "auto"
+auto_interval = "1d"
+[[peers.routes]]
+name = "lan"
+ssh_target = "arctern-mira-lan"
+[[peers.routes]]
+name = "wg"
+ssh_target = "arctern-mira-wg"
+auto = false
+
+# Snapshot only the explicitly listed datasets. Bare paths are exact,
+# non-recursive matches, so Docker, VM, and future datasets stay out.
+# novafs/nextcloud (~/Nextcloud, shared between boot environments) is
+# excluded on purpose: the Nextcloud server keeps its own history and the NAS
+# snapshots it, and the sync client churns its .sync_*.db on every pass.
+[[jobs]]
+type = "snap"
+name = "snapshot_nixos0"
+filesystems = { "novafs/nixos0/root" = true, "novafs/nixos0/data/home" = true }
+
+# Один job, один пир с failover-маршрутами; цикл каждые 15 минут.
+[[jobs]]
+type = "push"
+name = "push_to_mira"
+targets = ["mira"]
+interval = "15m"
+parallel = 2
+# Только последний снапшот на пуш (это и умолчание, здесь явно):
+# 15-минутная история живёт локально для быстрых откатов, mira получает
+# один снапшот в сутки, и WG-маршрут не тащит внутридневной churn.
+replicate = "latest"
+filesystems = { "novafs/nixos0/data/home" = true }
+[jobs.target]
+root_fs = "okdata/backups/nova"
+# send flags: all four default true (raw+embedded+compressed+large_blocks)

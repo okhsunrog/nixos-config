@@ -111,11 +111,11 @@
     "host-secrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1792369927,
-        "narHash": "sha256-svC6X9bFv32ADzZQQVXsHkj0P+h1KfDBOrarcNaKlBE=",
+        "lastModified": 1792399732,
+        "narHash": "sha256-81Z0r02vQgT2gJMnIFPVYk164Rl/5+NBsVWypv9yPaM=",
         "ref": "main",
-        "rev": "31a38c4859e2ab166e63291c865cbdc4cabcd704",
-        "revCount": 3,
+        "rev": "e5386ff38320b0cc5423377a40c20fd1a8b31ab1",
+        "revCount": 4,
         "type": "git",
         "url": "https://fgj.okhsunrog.dev/okhsunrog/nixos-secrets.git"
       },

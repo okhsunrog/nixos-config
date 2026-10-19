@@ -83,6 +83,7 @@
           nixos-hardware.nixosModules.framework-intel-core-ultra-series1
           ./hosts/framework
           floppa-vpn.nixosModules.default
+          arctern.nixosModules.default
         ];
       };
       formatter.${system} = pkgs.nixfmt-tree;

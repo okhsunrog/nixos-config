@@ -5,6 +5,7 @@
     ./secureboot.nix
     ./daily-tools.nix
     ./personal-packages.nix
+    ./arctern.nix
     ./secrets.nix
     ./corporate.nix
     ./floppa.nix

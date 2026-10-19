@@ -97,9 +97,11 @@ not imported by adding these packages. Rustup toolchains and project development
 libraries still need their own setup; the package list is not a universal SDK.
 Zen and VS Code are also installed. Floppa, Tangleaf and Arctern are native
 packages built with Crane from GitHub inputs pinned in `flake.lock`.
-`hosts/framework/personal-packages.nix` installs Tangleaf and Arctern; Arctern's
-replication service remains disabled until its configuration and state are
-migrated. Corporate VPN/agent setup is described in
+`hosts/framework/personal-packages.nix` installs Tangleaf. Arctern is enabled
+by `hosts/framework/arctern.nix`, with its replication identity decrypted by
+SOPS. NixOS home is replicated to Mira; Arch backup history is preserved. See
+[`docs/arctern-migration.md`](docs/arctern-migration.md) for the incremental
+cutover. Corporate VPN/agent setup is described in
 [`docs/corporate-workstation.md`](docs/corporate-workstation.md).
 VK Teams is intentionally left to the browser.
 CAD, Haskell, Julia, Logseq and Claude applications are excluded from this set.
