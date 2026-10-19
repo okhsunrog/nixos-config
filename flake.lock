@@ -89,6 +89,18 @@
         "type": "github"
       }
     },
+    "floppa-deployment": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-cpVfg88jX1Zkgp/MXiDUK7GnlLtmOq+aTQW6N3y6nPg=",
+        "type": "file",
+        "url": "https://fgj.okhsunrog.dev/api/packages/private-artifacts/generic/floppa-deployment/1/deployment.json"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://fgj.okhsunrog.dev/api/packages/private-artifacts/generic/floppa-deployment/1/deployment.json"
+      }
+    },
     "floppa-vpn": {
       "inputs": {
         "crane": "crane_2",
@@ -221,6 +233,7 @@
       "inputs": {
         "arctern": "arctern",
         "ayugram-plengine": "ayugram-plengine",
+        "floppa-deployment": "floppa-deployment",
         "floppa-vpn": "floppa-vpn",
         "host-secrets": "host-secrets",
         "insyde-src": "insyde-src",

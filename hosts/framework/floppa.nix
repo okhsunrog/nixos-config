@@ -1,7 +1,11 @@
-{ pkgs, floppa-vpn, ... }:
+{
+  pkgs,
+  floppa-vpn,
+  floppa-deployment,
+  ...
+}:
 let
-  artifacts = import ../../packages/corporate.nix { inherit pkgs; };
-  deployment = builtins.fromJSON (builtins.readFile artifacts.floppa-deployment);
+  deployment = builtins.fromJSON (builtins.readFile floppa-deployment);
 in
 {
   services.floppa-vpn = {

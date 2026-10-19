@@ -83,6 +83,25 @@ sudo is used only for runtime signing and installation. The installed Nix daemon
 uses the runtime netrc without the bootstrap wrapper. Both private Git input
 revision and package hashes are pinned. Updating secrets means committing and
 pushing `nixos-secrets`, then `nix flake update host-secrets` in `nixos-config`.
+Floppa's non-secret deployment JSON is a separate `flake = false` file input,
+`floppa-deployment`, pinned by its NAR hash in `flake.lock`. Reading it during
+configuration evaluation does not build or fetch a derivation. Its contents stay
+in the private registry and the local store; the public configuration contains
+only its URL and hash. `host-secrets` remains ciphertext-only.
+
+File-input fetching uses the evaluating process's HTTP credentials. When adding
+or changing this private input, use root's existing runtime netrc to produce a
+lockfile, then copy that public lockfile back as the repository owner:
+
+```sh
+sudo nix flake update floppa-deployment --output-lock-file /var/lib/zbm-rs-public/framework-inputs.lock
+cp /var/lib/zbm-rs-public/framework-inputs.lock flake.lock
+```
+
+Normal builds use the pinned store input; no token is copied into the repository.
+On a fresh machine, authenticated input prefetch is required before an offline
+build, just as the private Git input must already be available.
+
 Updating a binary means publishing a new package version and updating
 `packages/artifacts.json`, never silently replacing an existing pinned version.
 

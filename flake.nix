@@ -40,6 +40,10 @@
       url = "git+https://github.com/okhsunrog/AyuGramDesktop-PLEngine?ref=linux-plengine-7.2&submodules=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    floppa-deployment = {
+      url = "file+https://fgj.okhsunrog.dev/api/packages/private-artifacts/generic/floppa-deployment/1/deployment.json";
+      flake = false;
+    };
     floppa-vpn = {
       url = "github:okhsunrog/floppa-vpn";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -58,6 +62,7 @@
       insyde-src,
       zen-browser,
       floppa-vpn,
+      floppa-deployment,
       tangleaf,
       arctern,
       ayugram-plengine,
@@ -78,6 +83,7 @@
             host-secrets
             zen-browser
             floppa-vpn
+            floppa-deployment
             tangleaf
             arctern
             ayugram-plengine
