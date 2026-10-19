@@ -95,8 +95,13 @@ It enables direnv, nix-ld, Wireshark, Docker and libvirt/virt-manager, with expl
 user groups. Docker images/volumes, VMs, browser profiles and other user data are
 not imported by adding these packages. Rustup toolchains and project development
 libraries still need their own setup; the package list is not a universal SDK.
-Zen, the personal Floppa/Arctern builds and corporate VPN/agent configuration
-remain separate migration work. VK Teams is intentionally left to the browser.
+Zen and VS Code are also installed. Floppa, Tangleaf and Arctern are native
+packages built with Crane from GitHub inputs pinned in `flake.lock`.
+`hosts/framework/personal-packages.nix` installs Tangleaf and Arctern; Arctern's
+replication service remains disabled until its configuration and state are
+migrated. Corporate VPN/agent setup is described in
+[`docs/corporate-workstation.md`](docs/corporate-workstation.md).
+VK Teams is intentionally left to the browser.
 CAD, Haskell, Julia, Logseq and Claude applications are excluded from this set.
 
 Starship is installed for the existing user Bash configuration. Flyline uses

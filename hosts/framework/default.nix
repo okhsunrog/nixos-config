@@ -4,6 +4,7 @@
     ./hardware.nix
     ./secureboot.nix
     ./daily-tools.nix
+    ./personal-packages.nix
     ./secrets.nix
     ./corporate.nix
     ./floppa.nix

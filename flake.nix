@@ -28,6 +28,14 @@
       url = "github:0xc000022070/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    tangleaf = {
+      url = "github:okhsunrog/tangleaf";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    arctern = {
+      url = "github:okhsunrog/arctern";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     floppa-vpn = {
       url = "github:okhsunrog/floppa-vpn";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -46,6 +54,8 @@
       insyde-src,
       zen-browser,
       floppa-vpn,
+      tangleaf,
+      arctern,
     }:
     let
       system = "x86_64-linux";
@@ -63,6 +73,8 @@
             host-secrets
             zen-browser
             floppa-vpn
+            tangleaf
+            arctern
             ;
         };
         modules = [

@@ -30,6 +30,14 @@ Its CLI, GUI, polkit helper and systemd units come from the upstream project's
 NixOS module. API deployment metadata is checksum-pinned in the private Forgejo
 registry; it contains no session or access token.
 
+Floppa, Tangleaf and Arctern use their upstream Crane recipes. Their compiled
+Rust dependency caches are separate from application/frontend source inputs.
+Tangleaf's packaged desktop launcher replaces the user override pointing at an
+Arch developer build. Its data/profile still comes from the home clone.
+Arctern is installed without enabling its daemon: existing replication, prune
+jobs and daemon state need a separate migration before starting it.
+KeePassXC is installed through `daily-tools.nix`; its databases remain user data.
+
 Five persistent files were copied byte-for-byte from a consistent root snapshot
 to `/var/lib/floppa-vpn`: `settings.json`, `vpn-config.json`,
 `server-session.json`, `runtime.json`, `endpoint-cache.json`. The target directory

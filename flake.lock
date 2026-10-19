@@ -1,17 +1,84 @@
 {
   "nodes": {
-    "floppa-vpn": {
+    "arctern": {
       "inputs": {
+        "crane": "crane",
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1792375074,
-        "narHash": "sha256-ODoEEDlexoiciS+9OALTabMli1A898lIB8/SzSmb00Y=",
+        "lastModified": 1792381474,
+        "narHash": "sha256-EOO/c1iPdpaGYWUWevja0psZ09Yr3ZQehHQzsB9ck6g=",
+        "owner": "okhsunrog",
+        "repo": "arctern",
+        "rev": "d4a18e0163a0a009ae3958452874550df9a28c33",
+        "type": "github"
+      },
+      "original": {
+        "owner": "okhsunrog",
+        "repo": "arctern",
+        "type": "github"
+      }
+    },
+    "crane": {
+      "locked": {
+        "lastModified": 1792350552,
+        "narHash": "sha256-292lvpvxTGKryKxh3/3tcIVi85CwYGdl4oOi113Sob8=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "e675a36b7377bebe41d548388a2501cbb16d380d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
+        "type": "github"
+      }
+    },
+    "crane_2": {
+      "locked": {
+        "lastModified": 1792350552,
+        "narHash": "sha256-292lvpvxTGKryKxh3/3tcIVi85CwYGdl4oOi113Sob8=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "e675a36b7377bebe41d548388a2501cbb16d380d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
+        "type": "github"
+      }
+    },
+    "crane_3": {
+      "locked": {
+        "lastModified": 1792350552,
+        "narHash": "sha256-292lvpvxTGKryKxh3/3tcIVi85CwYGdl4oOi113Sob8=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "e675a36b7377bebe41d548388a2501cbb16d380d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
+        "type": "github"
+      }
+    },
+    "floppa-vpn": {
+      "inputs": {
+        "crane": "crane_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792381507,
+        "narHash": "sha256-VM8HPv473s9GWG2OLvdXAhOIp8JhIWAbhU7m+nG9oXo=",
         "owner": "okhsunrog",
         "repo": "floppa-vpn",
-        "rev": "7cd59c347466ea502cd3a08bd7ff3af7702aead7",
+        "rev": "ea7954abf7cab16282aefd86a29fc468fa0ab9e5",
         "type": "github"
       },
       "original": {
@@ -129,6 +196,7 @@
     },
     "root": {
       "inputs": {
+        "arctern": "arctern",
         "floppa-vpn": "floppa-vpn",
         "host-secrets": "host-secrets",
         "insyde-src": "insyde-src",
@@ -136,8 +204,30 @@
         "nixpkgs": "nixpkgs",
         "signed-modules": "signed-modules",
         "sops-nix": "sops-nix",
+        "tangleaf": "tangleaf",
         "zbm-rs": "zbm-rs",
         "zen-browser": "zen-browser"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "tangleaf",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792307278,
+        "narHash": "sha256-wJgFFtw/vlzsjWrQFmTn40TTkSkqHM4XXN0nh4q4uMk=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "42076d1c6a0fb405ed04f9a674e4a8f69de62ba3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
       }
     },
     "signed-modules": {
@@ -170,6 +260,28 @@
       "original": {
         "owner": "Mic92",
         "repo": "sops-nix",
+        "type": "github"
+      }
+    },
+    "tangleaf": {
+      "inputs": {
+        "crane": "crane_3",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay"
+      },
+      "locked": {
+        "lastModified": 1792381475,
+        "narHash": "sha256-y1pEea87ltexlbtJrTEml5wkpK9ylGp7MsALPuLXO/g=",
+        "owner": "okhsunrog",
+        "repo": "tangleaf",
+        "rev": "b09b4cc84510ae0a8efe0d0c32baf55137b83976",
+        "type": "github"
+      },
+      "original": {
+        "owner": "okhsunrog",
+        "repo": "tangleaf",
         "type": "github"
       }
     },
