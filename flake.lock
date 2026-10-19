@@ -21,6 +21,29 @@
         "type": "github"
       }
     },
+    "ayugram-plengine": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792400554,
+        "narHash": "sha256-5TClbAzKkrX6BNwBl+JF946W9REkkEMNv4ghjkGRWhI=",
+        "ref": "linux-plengine-7.2",
+        "rev": "670cf06040071c6e7d935d2acab7402ca8190f9e",
+        "revCount": 27111,
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/okhsunrog/AyuGramDesktop-PLEngine"
+      },
+      "original": {
+        "ref": "linux-plengine-7.2",
+        "submodules": true,
+        "type": "git",
+        "url": "https://github.com/okhsunrog/AyuGramDesktop-PLEngine"
+      }
+    },
     "crane": {
       "locked": {
         "lastModified": 1792350552,
@@ -197,6 +220,7 @@
     "root": {
       "inputs": {
         "arctern": "arctern",
+        "ayugram-plengine": "ayugram-plengine",
         "floppa-vpn": "floppa-vpn",
         "host-secrets": "host-secrets",
         "insyde-src": "insyde-src",

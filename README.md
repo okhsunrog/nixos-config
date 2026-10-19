@@ -104,6 +104,11 @@ SOPS. NixOS home is replicated to Mira; Arch backup history is preserved. See
 cutover. Corporate VPN/agent setup is described in
 [`docs/corporate-workstation.md`](docs/corporate-workstation.md).
 VK Teams is intentionally left to the browser.
+
+AyuGram uses the pinned Linux PLEngine fork, with native plugins built alongside
+the client. Its package and per-user plugin links are declared in
+`hosts/framework/ayugram-plengine.nix`; see
+[`docs/ayugram-plengine.md`](docs/ayugram-plengine.md).
 CAD, Haskell, Julia, Logseq and Claude applications are excluded from this set.
 
 Starship is installed for the existing user Bash configuration. Flyline uses

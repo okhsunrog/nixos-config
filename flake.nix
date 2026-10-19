@@ -36,6 +36,10 @@
       url = "github:okhsunrog/arctern";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    ayugram-plengine = {
+      url = "git+https://github.com/okhsunrog/AyuGramDesktop-PLEngine?ref=linux-plengine-7.2&submodules=1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     floppa-vpn = {
       url = "github:okhsunrog/floppa-vpn";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -56,6 +60,7 @@
       floppa-vpn,
       tangleaf,
       arctern,
+      ayugram-plengine,
     }:
     let
       system = "x86_64-linux";
@@ -75,6 +80,7 @@
             floppa-vpn
             tangleaf
             arctern
+            ayugram-plengine
             ;
         };
         modules = [

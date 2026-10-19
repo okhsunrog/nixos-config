@@ -6,6 +6,7 @@
     ./daily-tools.nix
     ./personal-packages.nix
     ./arctern.nix
+    ./ayugram-plengine.nix
     ./secrets.nix
     ./corporate.nix
     ./floppa.nix
