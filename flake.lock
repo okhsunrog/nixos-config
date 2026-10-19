@@ -74,11 +74,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792381507,
-        "narHash": "sha256-VM8HPv473s9GWG2OLvdXAhOIp8JhIWAbhU7m+nG9oXo=",
+        "lastModified": 1792382390,
+        "narHash": "sha256-ms14KH/cD1UX8qbFQ9jdP+Is+7V01H9AQPr9G9qgttc=",
         "owner": "okhsunrog",
         "repo": "floppa-vpn",
-        "rev": "ea7954abf7cab16282aefd86a29fc468fa0ab9e5",
+        "rev": "6a9f88ed5544469fcfcc5047e77fcc0c022e6454",
         "type": "github"
       },
       "original": {
