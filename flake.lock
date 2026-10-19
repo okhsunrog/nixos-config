@@ -234,7 +234,7 @@
       "flake": false,
       "locked": {
         "lastModified": 1,
-        "narHash": "sha256-kCQVty2rOa3kyccvVwwCIfsgIFp2O7HisWiWIJUbqfI=",
+        "narHash": "sha256-Xb/lQBCb4Mb3WqGflEIz0o9OBYH4d+EbOzMhnfM6SEU=",
         "path": "/var/lib/zbm-rs-public/framework-modules",
         "type": "path"
       },

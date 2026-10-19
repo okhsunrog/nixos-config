@@ -3,3 +3,4 @@
 /secrets/
 *.qcow2
 *.raw
+__pycache__/

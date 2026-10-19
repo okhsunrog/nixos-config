@@ -63,17 +63,47 @@ in
       assertion = toString config.boot.kernelPackages.kernel == manifest.kernel_store_path;
       message = "The signed module input does not match this exact kernel derivation. Re-sign the matching aggregate module tree before rebuilding.";
     }
+    {
+      assertion =
+        (manifest.unsigned_module_store_path or null)
+        == toString config.system.build.unsignedFrameworkModules;
+      message = "The signed modules do not match the current module sources. Run scripts/rebuild-framework.sh to prepare the matching signed input.";
+    }
   ];
   boot.kernelPackages = kernelPackages;
   system.build.unsignedFrameworkModules = bootPkgs.aggregateModules [
     config.boot.kernelPackages.kernel.modules
-    config.boot.kernelPackages.zfs
+    config.boot.kernelPackages.${config.boot.zfs.package.kernelModuleAttribute}
     (import "${zbm-rs}/nix/insyde-efivarfs.nix" {
       pkgs = bootPkgs;
       kernelPackages = config.boot.kernelPackages;
       sourceDirectory = insyde-src + "/modules/insyde-efivarfs";
     })
   ];
+  # The normal user builds this public plan; private keys are runtime-only.
+  system.build.frameworkModuleSigningPlan = bootPkgs.writeText "framework-module-signing.json" (
+    builtins.toJSON {
+      version = 1;
+      kernel = toString config.boot.kernelPackages.kernel;
+      module_version = config.boot.kernelPackages.kernel.modDirVersion;
+      unsigned = toString config.system.build.unsignedFrameworkModules;
+      certificate = toString (
+        builtins.path {
+          path = ./public/db.pem;
+          name = "db.pem";
+        }
+      );
+      sign_file = "${config.boot.kernelPackages.kernel.dev}/lib/modules/${config.boot.kernelPackages.kernel.modDirVersion}/build/scripts/sign-file";
+      signer = "${zbm-rs}/nix/sign-module-tree.py";
+      python = "${bootPkgs.python3}/bin/python3";
+      uv = "${bootPkgs.uv}/bin/uv";
+      nix_store = "${config.nix.package}/bin/nix-store";
+      tool_path = lib.makeBinPath [
+        bootPkgs.openssl
+        bootPkgs.zstd
+      ];
+    }
+  );
   system.modulesTree = lib.mkForce [ signed-modules ];
   boot.kernelModules = [ "insyde_efivarfs" ];
   boot.initrd.kernelModules = [ "insyde_efivarfs" ];
@@ -89,6 +119,9 @@ in
   security.apparmor.enable = true;
   security.tpm2.enable = true;
   environment.systemPackages = [
+    (bootPkgs.writeShellScriptBin "framework-rebuild" ''
+      exec /etc/nixos/scripts/rebuild-framework.sh "$@"
+    '')
     bootPkgs.uv
     bootPkgs.python3
     bootPkgs.openssl

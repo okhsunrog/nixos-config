@@ -191,3 +191,31 @@ stopped at its symlink-permission assertion, which was corrected and rerun.
 - Installation log: `/tmp/nixos-rio-install.log`.
 - Build log: `/tmp/nixos-rio-final-build.log`. No graphical Rio session on the
   physical NixOS system has been tested yet.
+
+## Owner-signed rebuild automation (2026-10-19)
+
+- Ten module-signing regression tests and the dedicated NixOS VM check pass.
+  They cover signature verification, changed module contents with an unchanged
+  kernel ABI, atomic publication, cache reuse and failure before installation.
+- The disposable encrypted-ZFS VM completed its installation, updated-generation
+  and snapshot-clone boots with the signing fixture in 376.02 seconds. Disposable
+  VM keys were used; no physical TPM state or owner keys were passed to the VM.
+- The missing public build outputs were recovered from the original Arch Nix
+  store mounted read-only. Their exact derivation/NAR identities matched, and
+  `nix-store --verify-path` passed for all five copied outputs. This avoided an
+  unnecessary rebuild of the already installed kernel; no kernel version changed.
+- On the laptop, the existing signatures and source payloads of all 7,413 modules
+  were checked before adopting the signed tree with source provenance. The next
+  invocation reported a cache hit and reused those signatures.
+- `scripts/rebuild-framework.sh build` completed without changing the installed
+  profile. The subsequent `switch` installed the same built system and prepared
+  its boot bundle. Kernel PE signature, detached CMS authorization, boot hashes,
+  Bootspec binding and installed filesystem/secret-file checks passed.
+- The cached artifact and derivation-backed signing plan have indirect GC roots.
+  The plan retains the unsigned modules, kernel development output and signing
+  tools; private keys remain outside the Nix store and repository.
+- `framework-rebuild` is available in the installed system. Barbos, Floppa, NAC
+  and Orbit remained active, no system units were failed, and Secure Boot was
+  readable as enabled. TPM setup and PCR product services were active.
+- Automatic EFI-variable recovery through the next physical boot still requires
+  a laptop reboot; VM checks and an in-place switch do not establish that result.

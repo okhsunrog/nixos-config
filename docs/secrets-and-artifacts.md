@@ -77,7 +77,9 @@ with authenticated Git/HTTP access and removes the credential on exit. Supply
 sops on root's PATH if sudo resets the package-shell PATH. Never put a token in
 an argument, an environment variable recorded in a derivation, or `flake.lock`.
 
-After normal NixOS boot, `sudo nixos-rebuild boot --flake /etc/nixos#framework`
+After normal NixOS boot, run `./scripts/rebuild-framework.sh` as the regular user.
+It prepares the matching signed modules before installing a boot generation;
+sudo is used only for runtime signing and installation. The installed Nix daemon
 uses the runtime netrc without the bootstrap wrapper. Both private Git input
 revision and package hashes are pinned. Updating secrets means committing and
 pushing `nixos-secrets`, then `nix flake update host-secrets` in `nixos-config`.

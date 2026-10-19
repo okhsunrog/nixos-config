@@ -49,7 +49,7 @@ VM success does not establish physical laptop, firmware or TPM acceptance.
 The `signed-modules` input is deliberately a local, public artifact at
 `/var/lib/zbm-rs-public/framework-modules`. It contains owner-signed kernel,
 ZFS and Insyde-recovery modules and an exact kernel-derivation manifest. Preserve
-this input or regenerate it with `scripts/sign-framework-modules.sh`; private
+this input or regenerate it with `scripts/rebuild-framework.sh`; private
 keys are runtime files and never part of the input or Nix store.
 
 ## Install on the laptop
@@ -129,7 +129,42 @@ VKey/Barbos, split DNS, TPM access, confined NAC/Orbit, read-only D-Bus, audit a
 script archival. Issued keys and registration state stay outside the Nix store.
 The corporate VM check uses only disposable agents and a virtual TPM.
 
-On NixOS: `sudo nixos-rebuild boot --flake /etc/nixos#framework`. The upstream
+On NixOS, run as your normal user:
+
+```sh
+cd ~/code/nixos-config
+./scripts/rebuild-framework.sh          # prepare the next boot; keep this session
+./scripts/rebuild-framework.sh switch   # also activate the configuration now
+./scripts/rebuild-framework.sh build    # prepare/build only; do not install
+```
+
+Once this configuration is activated, `framework-rebuild` is the same command
+for the working repository at `/etc/nixos`; it can be called from any directory.
+
+The command builds a public signing plan and the unsigned kernel/module outputs
+using your own Nix cache and Git credentials. It elevates only the module-signing
+step and system installation. It refreshes only `signed-modules` in `flake.lock`,
+then builds the complete system before changing the system profile. Normal
+configuration edits reuse the cached signed modules; changes to any module
+source, kernel or trust/signing inputs invalidate that cache. Build options can
+be passed after `--`, for example `boot -- --max-jobs 2 --cores 2`.
+
+Signing uses root-only `/var/lib/zbm-rs-signing`, retains immutable public outputs
+and the public plan with Nix GC roots, and atomically replaces the real
+public-input directory. The plan also retains `kernel.dev` and unsigned modules,
+so deleting ordinary result links and running GC does not discard this build
+cache. Old signing-cache roots are retained until explicitly removed by the owner.
+The manifest binds the result to both the exact kernel and unsigned module-tree
+store paths. This catches a changed Insyde/ZFS module even with the same kernel
+ABI. An existing legacy tree can be adopted without re-signing only after every
+module's decompressed payload and signature, and all metadata, are checked.
+Private key material never enters Nix expressions, plans, outputs or build sandboxes.
+The script does not update dependencies or commit the resulting lockfile; review
+and commit it with your intended configuration change. A failed build leaves the
+installed system alone. A failed activation restores the profile pointer where
+possible but is not a promise to undo every partially applied runtime change.
+
+The upstream
 zbm-rs NixOS module reads the standard Bootspec, copies its kernel and initramfs,
 appends runtime secrets, and signs the resulting kernel, final initramfs and
 exact native plan. The original store paths and Bootspec are never modified.
@@ -150,11 +185,12 @@ policies, not routine generation rebuilding. Arch helper scripts may still need
 their filesystem/tool paths adapted before use in NixOS.
 The OS kernel and all modules use the same explicit owner trust. A changed kernel
 must match the signed module input exactly: the build stops if they differ.
-After deliberately updating the kernel inputs, run
-`sudo scripts/sign-framework-modules.sh` before rebuilding. The helper builds
-the matching unsigned aggregate, signs and verifies a public copy outside Nix,
-then refreshes only the local signed-module lock input. This is a key operation
-outside derivations, not a disabled signature check or an unsigned fallback.
+After deliberately updating the kernel inputs, use the same
+`./scripts/rebuild-framework.sh` command. Its privileged half consumes only a
+completed immutable signing plan; it performs no Nix evaluation, Git access or
+lockfile edits. A direct `nixos-rebuild` remains possible when the signed input
+already matches, but does not orchestrate module preparation. This is a key
+operation outside derivations, not an unsigned fallback.
 
 The OS retains native systemd TPM/SRK/NvPCR services and receives the installed
 loader's signed PCR policy/public key through its runtime-secret appender.

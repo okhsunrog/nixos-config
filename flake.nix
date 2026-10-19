@@ -92,6 +92,8 @@
         inherit (pkgs) age sops;
       };
       checks.${system} = {
+        module-signing = import ./tests/module-signing.nix { inherit pkgs zbm-rs; };
+        module-signing-vm = import ./tests/module-signing-vm.nix { inherit pkgs zbm-rs; };
         boot-environment = zbm-rs.checks.${system}.native-nixos;
         novpn = import ./tests/novpn.nix { inherit pkgs; };
         secrets = import ./tests/secrets.nix { inherit pkgs sops-nix; };
