@@ -1,5 +1,27 @@
 # Validation status
 
+## Configuration refactoring, 2026-10-19
+
+- Storage, desktop and virtualisation settings now have separate host modules.
+  The existing Docker MTU settings are preserved. Unused Rio/niri code is removed.
+- Kernel, unsigned module tree, filesystem declarations and both systemd package
+  derivations are identical before and after the refactor.
+- The Floppa deployment file retains its original SHA-256 content hash and is now
+  a locked file input. The GUI derivation evaluates with
+  `allow-import-from-derivation = false`.
+- The secrets VM imports the same module as the host and verifies password
+  provisioning, runtime permissions, netrc configuration and the Nix daemon's
+  dependency on SOPS. It passed in 18.31 seconds. The test explicitly starts the
+  socket-activated daemon before checking its running state.
+- The novpn VM passed in 19.78 seconds. The corporate check succeeded using its
+  existing cached result. The encrypted-ZFS installation, generation and snapshot
+  clone VM passed in 88.84 seconds.
+- The complete Framework system built successfully. Flake evaluation, Nix
+  formatting, ShellCheck and whitespace checks passed. The systemd adapter also
+  rejects an unexpected base version in a negative evaluation test.
+- No host activation, firmware change or physical boot was performed for this
+  refactor.
+
 ## Framework NvPCR compatibility, 2026-10-19
 
 Arch's last boot used systemd 262.1 and initialized the `hardware`,

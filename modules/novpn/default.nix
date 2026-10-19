@@ -37,7 +37,7 @@ let
   launcher = pkgs.writeShellApplication {
     name = "novpn-ff";
     runtimeInputs = [
-      pkgs.systemd
+      config.systemd.package
       pkgs.coreutils
       pkgs.util-linux
     ];
@@ -46,7 +46,7 @@ let
       export DBUS_SESSION_BUS_ADDRESS="''${DBUS_SESSION_BUS_ADDRESS:-unix:path=$XDG_RUNTIME_DIR/bus}"
       systemctl --user start novpn-anchor.service
       # Resolve the current cgroup inode before the browser creates any socket.
-      /run/wrappers/bin/sudo ${pkgs.systemd}/bin/systemctl restart novpn-firewall.service
+      /run/wrappers/bin/sudo ${config.systemd.package}/bin/systemctl restart novpn-firewall.service
       if systemctl --user is-active --quiet firefox-novpn.service; then
         echo 'Firefox novpn is already running.'
         exit 0
@@ -115,7 +115,7 @@ in
         users = [ cfg.user ];
         commands = [
           {
-            command = "${pkgs.systemd}/bin/systemctl restart novpn-firewall.service";
+            command = "${config.systemd.package}/bin/systemctl restart novpn-firewall.service";
             options = [ "NOPASSWD" ];
           }
         ];

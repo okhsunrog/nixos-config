@@ -48,7 +48,7 @@ let
     iproute2
     iptables
     nftables
-    systemd
+    config.systemd.package
     dbus
     dmidecode
     openssl

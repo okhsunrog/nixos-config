@@ -56,4 +56,6 @@ let
         );
     };
 in
+assert lib.assertMsg (pkgs.systemd.version == "261.3")
+  "systemd-262.nix expects systemd 261.3 as its base. Recheck the local patches and overrideAttrs adapter, or replace this package with the tested upstream systemd.";
 wrap (pkgs.systemd.overrideAttrs adapt)
