@@ -86,15 +86,29 @@ Plasma Login Manager provides the graphical login, with Plasma as the default
 session. The system includes Konsole, Dolphin, KDE authentication agent and
 portals, Firefox, Neovim, PipeWire and Bluetooth. Neovim is the default editor;
 `vi` and `vim` are aliases to it. Caps switches between US and Russian layouts.
-The previous niri configuration remains in the source tree for reference.
 
 `hosts/framework/daily-tools.nix` contains the first Arch migration package set:
-Chrome/Firefox, AyuGram, KeePassXC, Nextcloud, LibreOffice, KDE utilities, editors,
+Chrome, AyuGram, KeePassXC, Nextcloud, LibreOffice, KDE utilities, editors,
 Git, Rust/Python/JS/Go tools, Android/serial utilities and network diagnostics.
-It enables direnv, nix-ld, Wireshark, Docker and libvirt/virt-manager, with explicit
-user groups. Docker images/volumes, VMs, browser profiles and other user data are
+It enables direnv, nix-ld and Wireshark.
+`hosts/framework/virtualisation.nix` configures Docker and libvirt/virt-manager,
+including user groups, bridge MTU and the libvirt credential workaround.
+`desktop.nix` configures Plasma and audio; `storage.nix` contains the ZFS layout
+and its boot dependencies. Firefox and its VKey integration are enabled by
+the corporate module. Docker images/volumes, VMs, browser profiles and other user data are
 not imported by adding these packages. Rustup toolchains and project development
 libraries still need their own setup; the package list is not a universal SDK.
+
+Docker's default bridge and newly created user-defined bridges use MTU 1280,
+matching the Floppa tunnel. At MTU 1500, forwarded TCP connections advertised
+MSS 1460 and stalled while downloading HTTP responses through the tunnel;
+host networking worked because host connections used the tunnel's smaller MTU.
+Both `mtu` and `default-network-opts` are set in the daemon configuration
+([Docker reference](https://docs.docker.com/reference/cli/dockerd/#default-network-options)).
+Existing user-defined networks retain the settings from their creation and
+must be recreated to pick up a changed default. Normal Docker builds use
+their default network; no `--network=host` option is required.
+
 Zen and VS Code are also installed. Floppa, Tangleaf and Arctern are native
 packages built with Crane from GitHub inputs pinned in `flake.lock`.
 `hosts/framework/personal-packages.nix` installs Tangleaf. Arctern is enabled
@@ -122,12 +136,6 @@ Starship configuration is left to the home migration.
 `system.stateVersion` stays at `26.05` to preserve existing state conventions.
 The separately pinned, owner-trusted kernel and signed module tree remain
 independent of the desktop package update.
-
-The former niri desktop packages (Rio, Foot, fuzzel, waybar, mako, swaybg,
-swaylock, Nautilus, xwayland-satellite, wl-clipboard, brightnessctl, playerctl
-and pavucontrol) are no longer installed explicitly. Plasma supplies desktop,
-clipboard, brightness, media and audio controls. The Rio and Rust overlay
-flake inputs have been removed.
 
 ## Rebuild and recovery
 

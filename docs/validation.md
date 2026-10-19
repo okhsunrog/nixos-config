@@ -122,7 +122,7 @@ Root-only signed releases, rollback boot files and policy staging are under
 Pre-change snapshots are named `before-zbm-rs-secureboot-20261017`.
 
 Physical F12 boot into zbm-rs, both OSes, keyboard/recovery, hardware TPM/NvPCR,
-niri/Rio and laptop hardware remain separate acceptance tests. No reboot was
+the graphical session and laptop hardware remain separate acceptance tests. No reboot was
 performed during installation.
 
 ## Historical preparation, 2026-10-04
@@ -130,8 +130,7 @@ performed during installation.
 Preparation started on 2026-10-04 from the running Arch boot environment.
 
 - NixOS configuration evaluates with the pinned `nixos-26.05` input.
-- Selected kernel: 6.18.55; OpenZFS: 2.4.4; niri: 26.04.
-- Niri configuration passes `niri validate` (`checks.x86_64-linux.niri-config`).
+- Selected kernel: 6.18.55; OpenZFS: 2.4.4.
 - ShellCheck and Nix formatting pass.
 - The encrypted-disk VM passed installation, the first kexec boot, preservation
   of the current bundle when its key is missing, and booting an updated
@@ -147,7 +146,7 @@ Preparation started on 2026-10-04 from the running Arch boot environment.
   does not impose a dataset quota.
 - Post-install checks were corrected to dereference the initramfs symlink and
   resolve `/etc/hostid` inside the target root.
-- No physical NixOS boot, niri session or hardware validation has occurred.
+- At that stage, physical NixOS boot and hardware validation had not occurred.
 
 ## Home mount regression: red / green
 
@@ -170,27 +169,6 @@ Current build logs are `/tmp/nixos-framework-current.log` and
 `/tmp/nixos-be-test-recovery.log`. Both builds finished successfully. The physical
 installation log is `/tmp/nixos-framework-install.log`; the initial wrapper
 stopped at its symlink-permission assertion, which was corrected and rerun.
-
-## Personal Rio terminal
-
-- Rio is pinned to `okhsunrog/rio` commit
-  `11b8a338473898ff5d012f890eb0df06f66a8e2f`, matching the local Arch build,
-  with Rust 1.96.1 and X11, Wayland, WGPU and audio enabled.
-- The Rio package and complete laptop system built successfully. All 223
-  frontend tests passed, including `base_layout_key_follows_pc101_position`
-  and `alternate_keys_payload_fields` from the kitty keyboard patch.
-- The packaged binary runs and reports `rioterm 0.5.28`; desktop integration,
-  man page and the separate terminfo output are installed by the package.
-- Niri configuration validation passed with Super+Enter launching Rio.
-  Foot remains installed as a fallback.
-- The complete system was installed into `novafs/nixos0/root`. Post-install
-  boot/secret/home checks passed; Rio and foot version commands and niri
-  validation passed inside the installed root. The pre-update snapshot is
-  `novafs/nixos0@before-rio`, and the installed state is `@rio-installed`.
-  Dataset quota remains `none`, and pool `bootfs` remains unset.
-- Installation log: `/tmp/nixos-rio-install.log`.
-- Build log: `/tmp/nixos-rio-final-build.log`. No graphical Rio session on the
-  physical NixOS system has been tested yet.
 
 ## Owner-signed rebuild automation (2026-10-19)
 
