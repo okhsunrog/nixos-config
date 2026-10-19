@@ -40,6 +40,7 @@ in
 
     # Editors, version control and general development tools.
     vscode
+    code-cursor
     zed-editor
     codex
     git-lfs
