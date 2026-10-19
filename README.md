@@ -61,8 +61,8 @@ entries and `bootfs` untouched. The ZFS key and a separately restored age key
 are copied directly into the target's private files, never printed or placed
 in Git/the Nix store. Existing user UID/GID is 1000. Password hashes now come
 from the SOPS-encrypted, pinned private `host-secrets` input, before user setup.
-Old `/etc/nixos/secrets` files are retained only for rollback to earlier
-generations; they are no longer the active configuration source.
+The former plaintext password-hash files in `/etc/nixos/secrets` are no longer
+used; the old installed source copy is removed when linking the working tree.
 
 See [secrets and private artifacts](docs/secrets-and-artifacts.md) for the two
 Forgejo repositories, package authentication, bootstrap and signing-key recovery.
