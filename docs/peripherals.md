@@ -2,7 +2,7 @@
 
 `hosts/framework/peripherals.nix` owns the device access rules and printer
 queues. Local udev rules cover UNI-T/Voltcraft HID bridges, POWER-Z KM003C,
-Ergot, thermal-cat cameras, the Vial keyboard and usbmon. Probe-rs rules come
+Ergot, thermal-cat cameras, the Vial keyboard, IQOS ILUMA and usbmon. Probe-rs rules come
 from the `udevRules` source pinned by the existing Nixpkgs input, without
 building the probe-rs tools themselves. The local uaccess rules run before
 `73-seat-late.rules`; `plugdev` supplies their existing group fallback.
@@ -27,7 +27,7 @@ stored in the private Forgejo Generic registry; URL and SHA-256 are in
 never enters Git or derivations. The archive was extracted from the installed
 Arch package after the official vendor download proved unavailable.
 
-The system build, CUPS queue provisioning and all seven udev files were
+The system build, CUPS queue provisioning and the original seven udev files were
 validated. Physical printing was not tested: at migration time the printer's
 mDNS hostname did not respond. No test pages were submitted.
 

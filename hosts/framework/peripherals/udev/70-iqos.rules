@@ -1,0 +1,2 @@
+# IQOS ILUMA USB HID access for local users.
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="2759", ATTR{idProduct}=="0003", MODE="0660", GROUP="plugdev", TAG+="uaccess"
