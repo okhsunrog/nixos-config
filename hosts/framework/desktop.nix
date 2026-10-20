@@ -1,5 +1,7 @@
 { pkgs, ... }:
 {
+  imports = [ ../../modules/plasma-login-auth.nix ];
+
   services.desktopManager.plasma6.enable = true;
   services.displayManager.plasma-login-manager.enable = true;
   services.displayManager.defaultSession = "plasma";

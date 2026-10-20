@@ -108,6 +108,7 @@
         inherit (pkgs) age sops;
       };
       checks.${system} = {
+        plasma-login-auth = import ./tests/plasma-login-auth.nix { inherit pkgs; };
         module-signing = import ./tests/module-signing.nix { inherit pkgs zbm-rs; };
         module-signing-vm = import ./tests/module-signing-vm.nix { inherit pkgs zbm-rs; };
         boot-environment = zbm-rs.checks.${system}.native-nixos;
