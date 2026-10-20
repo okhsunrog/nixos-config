@@ -137,6 +137,11 @@ Starship configuration is left to the home migration.
 The separately pinned, owner-trusted kernel and signed module tree remain
 independent of the desktop package update.
 
+The system CA bundle explicitly distrusts `Comodo AAA Services root` and
+`emSign ECC Root CA - G3` following the
+[October 2026 eMudhra intermediate CA compromise](https://emudhra.we-have-a-problem.com/).
+Applications with embedded trust stores still require their own security updates.
+
 ## Rebuild and recovery
 
 The Framework host enables the [corporate workstation integration](docs/corporate-workstation.md):
