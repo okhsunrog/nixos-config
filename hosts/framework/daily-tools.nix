@@ -42,6 +42,7 @@ in
     vscode
     code-cursor
     zed-editor
+    jetbrains-toolbox
     codex
     git-lfs
     git-filter-repo
@@ -96,7 +97,7 @@ in
     kdePackages.qttools # qdbus for existing desktop scripts
 
     # Android/USB/serial work and network diagnosis. VPN profiles are separate.
-    android-tools
+    android-tools # systemd's 70-uaccess.rules grants ADB/fastboot USB access.
     scrcpy
     dfu-util
     tio
