@@ -12,6 +12,10 @@ let
   '';
 in
 {
+  # PowerDevil uses DDC/CI over I2C for external monitor brightness.
+  hardware.i2c.enable = true;
+  environment.systemPackages = [ pkgs.ddcutil ];
+
   services.udev.packages = [ deviceRules ];
   boot.kernelModules = [ "usbmon" ];
   users.groups.plugdev = { };

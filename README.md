@@ -99,6 +99,12 @@ the corporate module. Docker images/volumes, VMs, browser profiles and other use
 not imported by adding these packages. Rustup toolchains and project development
 libraries still need their own setup; the package list is not a universal SDK.
 
+External monitor brightness uses PowerDevil's DDC/CI support. `peripherals.nix`
+enables `hardware.i2c` to load `i2c-dev` and grant the local session access to
+the I2C devices, and installs `ddcutil` for diagnostics. DDC/CI must also be enabled
+in the monitor's own settings. Check detection with `ddcutil detect` and read
+brightness with `ddcutil --bus BUS getvcp 10`.
+
 Docker's default bridge and newly created user-defined bridges use MTU 1280,
 matching the Floppa tunnel. At MTU 1500, forwarded TCP connections advertised
 MSS 1460 and stalled while downloading HTTP responses through the tunnel;
