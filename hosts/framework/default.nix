@@ -35,12 +35,6 @@
     "en_GB.UTF-8/UTF-8"
     "ru_RU.UTF-8/UTF-8"
   ];
-  # Block both trust paths to the compromised eMudhra intermediate CAs.
-  # https://emudhra.we-have-a-problem.com/
-  security.pki.caCertificateBlacklist = [
-    "Comodo AAA Services root"
-    "emSign ECC Root CA - G3"
-  ];
   security.sudo.extraRules = [
     {
       users = [ "okhsunrog" ];

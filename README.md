@@ -132,14 +132,16 @@ outside `TERM=linux`; `FLYLINE=0 bash` retains plain readline. Existing user
 Starship configuration is left to the home migration.
 
 `nixpkgs` follows `nixos-unstable`, pinned by `flake.lock`; refresh it with
-`nix flake update nixpkgs`. The October 15, 2026 pin provides Plasma 6.8.0.
+`nix flake update nixpkgs`.
 `system.stateVersion` stays at `26.05` to preserve existing state conventions.
 The separately pinned, owner-trusted kernel and signed module tree remain
 independent of the desktop package update.
 
-The system CA bundle explicitly distrusts `Comodo AAA Services root` and
-`emSign ECC Root CA - G3` following the
-[October 2026 eMudhra intermediate CA compromise](https://emudhra.we-have-a-problem.com/).
+The pinned nixpkgs includes the
+[upstream NixOS mitigation for the October 2026 eMudhra CA compromise](https://github.com/NixOS/nixpkgs/pull/576390),
+so no local CA blacklist is needed. The system CA bundle explicitly distrusts
+`Comodo AAA Services root`, `emSign ECC Root CA - G3`, `emSign Root CA - C1`
+and `emSign ECC Root CA - C3`.
 Applications with embedded trust stores still require their own security updates.
 
 ## Rebuild and recovery
