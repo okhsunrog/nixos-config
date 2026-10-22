@@ -115,9 +115,10 @@ Existing user-defined networks retain the settings from their creation and
 must be recreated to pick up a changed default. Normal Docker builds use
 their default network; no `--network=host` option is required.
 
-Zen and VS Code are also installed. Floppa, Tangleaf and Arctern are native
+Zen and VS Code are also installed. Floppa and Arctern are native
 packages built with Crane from GitHub inputs pinned in `flake.lock`.
-`hosts/framework/personal-packages.nix` installs Tangleaf. Arctern is enabled
+Tangleaf is built incrementally from its local checkout using its dev shell
+and user desktop launcher, independently of NixOS rebuilds. Arctern is enabled
 by `hosts/framework/arctern.nix`, with its replication identity decrypted by
 SOPS. NixOS home is replicated to Mira; Arch backup history is preserved. See
 [`docs/arctern-migration.md`](docs/arctern-migration.md) for the incremental
