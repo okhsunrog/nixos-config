@@ -11,6 +11,7 @@ in
   services.floppa-vpn = {
     enable = true;
     autostart = true;
+    keepBuildDependencies = true;
     users = [ "okhsunrog" ];
     guiPackage = floppa-vpn.lib.mkClient {
       inherit pkgs;
