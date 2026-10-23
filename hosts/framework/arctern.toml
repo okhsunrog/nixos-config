@@ -30,13 +30,14 @@ auto = false
 
 # Snapshot only the explicitly listed datasets. Bare paths are exact,
 # non-recursive matches, so Docker, VM, and future datasets stay out.
+# Root rollback uses NixOS generations; keep /nix build caches out of snapshots.
 # novafs/nextcloud (~/Nextcloud, shared between boot environments) is
 # excluded on purpose: the Nextcloud server keeps its own history and the NAS
 # snapshots it, and the sync client churns its .sync_*.db on every pass.
 [[jobs]]
 type = "snap"
 name = "snapshot_nixos0"
-filesystems = { "novafs/nixos0/root" = true, "novafs/nixos0/data/home" = true }
+filesystems = { "novafs/nixos0/data/home" = true }
 
 # Один job, один пир с failover-маршрутами; цикл каждые 15 минут.
 [[jobs]]
