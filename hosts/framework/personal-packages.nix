@@ -1,5 +1,6 @@
 {
   pkgs,
+  rio,
   ...
 }:
 let
@@ -17,6 +18,7 @@ let
 in
 {
   environment.systemPackages = [
+    rio
     (pkgs.callPackage ../../packages/chatgpt.nix { })
     orcaSlicer
   ];

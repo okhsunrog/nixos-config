@@ -15,6 +15,10 @@
       url = "git+https://fgj.okhsunrog.dev/okhsunrog/nixos-secrets.git?ref=main";
       flake = false;
     };
+    rio-src = {
+      url = "github:okhsunrog/rio/nixos-main-with-fixes";
+      flake = false;
+    };
     zbm-rs.url = "github:okhsunrog/zbm-rs";
     zbm-rescue.url = "github:okhsunrog/zbm-rs/4038ff09a44c674fc1b4b1126b0f21aa4d09706a";
     signed-modules = {
@@ -50,6 +54,7 @@
   outputs =
     {
       self,
+      rio-src,
       nixpkgs,
       nixos-hardware,
       sops-nix,
@@ -73,6 +78,7 @@
       nixosConfigurations.framework = nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = {
+          rio = self.packages.${system}.rio;
           inherit
             zbm-rs
             zbm-rescue
@@ -97,6 +103,10 @@
       };
       formatter.${system} = pkgs.nixfmt-tree;
       packages.${system} = (import ./packages/corporate.nix { inherit pkgs; }) // {
+        rio = import ./packages/rio.nix {
+          inherit pkgs;
+          src = rio-src;
+        };
         installer = pkgs.nixos-install-tools;
         boot-environment-test = zbm-rs.checks.${system}.native-nixos;
         flyline = import ./packages/flyline.nix { inherit pkgs; };

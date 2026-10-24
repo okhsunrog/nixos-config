@@ -159,6 +159,22 @@ so no local CA blacklist is needed. The system CA bundle explicitly distrusts
 and `emSign ECC Root CA - C3`.
 Applications with embedded trust stores still require their own security updates.
 
+## Personal Rio build
+
+Rio is built from [`okhsunrog/rio:nixos-main-with-fixes`](https://github.com/okhsunrog/rio/tree/nixos-main-with-fixes),
+based on upstream main `59203ccd5` plus PRs
+[#1957](https://github.com/raphamorim/rio/pull/1957) and
+[#1964](https://github.com/raphamorim/rio/pull/1964). The latter already includes
+#1958 and the maintainer's AltGr/Unidentified guards. `rio-src` in `flake.lock`
+pins the exact integrated commit; the branch does not update installed systems
+automatically. After intentionally updating the branch, use
+`nix flake update rio-src` and `nix build .#rio` before rebuilding the system.
+
+`packages/rio.nix` includes X11/Wayland, WGPU and audio support, terminfo and desktop
+integration. Its build runs terminal, backend/configuration and VT tests. Rio is
+installed in both KDE and Niri; Niri's Super+Enter launches Rio and Foot remains
+available. Existing user Rio configuration is preserved.
+
 ## Rebuild and recovery
 
 The Framework host enables the [corporate workstation integration](docs/corporate-workstation.md):

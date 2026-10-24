@@ -48,7 +48,7 @@
     spawn-at-startup "waybar"
     spawn-at-startup "mako"
     binds {
-      Mod+Return { spawn "foot"; }
+      Mod+Return { spawn "rio"; }
       Mod+D { spawn "fuzzel"; }
       Mod+Q { close-window; }
       Mod+Left { focus-column-left; }

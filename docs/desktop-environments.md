@@ -104,7 +104,7 @@ and secret portal provider, with PAM password unlock, so cloned application keys
 remain available. Use the login password for the first login; a wallet with a
 different password may prompt separately. Browser authorizations still require
 verification in the actual session. The supplied basic configuration has
-Mod+Return for foot, Mod+D for fuzzel and Mod+Shift+/ for help; it starts waybar
+Mod+Return for Rio (Foot remains installed as a fallback), Mod+D for fuzzel and Mod+Shift+/ for help; it starts waybar
 and mako. Customise `~/.config/niri/config.kdl` in that home as needed. Desktop,
 fingerprint greeter, screen sharing and physical devices still need laptop
 acceptance testing.

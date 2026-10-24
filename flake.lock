@@ -277,6 +277,23 @@
         "type": "github"
       }
     },
+    "rio-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792835788,
+        "narHash": "sha256-RAMpLf49accY7Gye6oHruO4QUTH7iu9GWFNxSJuPxnI=",
+        "owner": "okhsunrog",
+        "repo": "rio",
+        "rev": "3da398ecf755d06369940be0bac88597c4db5be1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "okhsunrog",
+        "ref": "nixos-main-with-fixes",
+        "repo": "rio",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "arctern": "arctern",
@@ -287,6 +304,7 @@
         "insyde-src": "insyde-src",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs",
+        "rio-src": "rio-src",
         "signed-modules": "signed-modules",
         "sops-nix": "sops-nix",
         "zbm-rescue": "zbm-rescue",
