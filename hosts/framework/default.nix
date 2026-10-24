@@ -4,6 +4,7 @@
     ./hardware.nix
     ./storage.nix
     ./environments.nix
+    ./home-manager.nix
     ./desktop.nix
     ./virtualisation.nix
     ./secureboot.nix

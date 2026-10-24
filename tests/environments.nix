@@ -74,8 +74,29 @@ assert !niri.services.displayManager.plasma-login-manager.enable;
 assert !niri.framework.plasmaLoginAuth.enable;
 assert !(niri.security.pam.services ? plasmalogin);
 assert niri.services.greetd.enable;
-assert niri.security.pam.services.login.kwallet.enable;
-assert niri.security.pam.services.login.kwallet.forceRun;
+assert preview.home-manager.users == { };
+assert niri.programs.dms-greeter.enable;
+assert niri.programs.dms-greeter.compositor.name == "niri";
+assert !niri.security.pam.services.login.kwallet.enable;
+assert !(niri.systemd.user.services ? plasma-kwallet-pam);
+assert niri.home-manager.users.okhsunrog.home.homeDirectory == "/home/okhsunrog";
+assert niri.home-manager.users.okhsunrog.programs.dank-material-shell.enable;
+assert niri.home-manager.users.okhsunrog.programs.dank-calendar.enable;
+assert niri.home-manager.users.okhsunrog.programs.dux-files.enable;
+assert niri.home-manager.users.okhsunrog.programs.dsearch.enable;
+assert !(niri.systemd.user.services ? dms);
+assert niri.xdg.portal.config.niri."org.freedesktop.impl.portal.FileChooser" == "dfiles";
+assert lib.all (
+  p:
+  !(builtins.elem (lib.getName p) [
+    "foot"
+    "fuzzel"
+    "waybar"
+    "mako"
+    "swaylock"
+    "tuigreet"
+  ])
+) niri.environment.systemPackages;
 assert !niri.services.gnome.gnome-keyring.enable;
 assert niri.xdg.portal.config.niri."org.freedesktop.impl.portal.Secret" == "kwallet";
 assert niri.fileSystems."/home".device == "novafs/nixos0/data/home-niri";

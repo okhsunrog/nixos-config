@@ -99,15 +99,56 @@ and shell settings, belongs to the selected home. An empty home needs its own
 user credentials/configuration; the helper does not copy them. System-wide
 packages and environment variables still come from the selected NixOS closure.
 
-Niri starts through greetd/tuigreet. It retains KWallet as the Secret Service
-and secret portal provider, with PAM password unlock, so cloned application keys
-remain available. Use the login password for the first login; a wallet with a
-different password may prompt separately. Browser authorizations still require
-verification in the actual session. The supplied basic configuration has
-Mod+Return for Rio (Foot remains installed as a fallback), Mod+D for fuzzel and Mod+Shift+/ for help; it starts waybar
-and mako. Customise `~/.config/niri/config.kdl` in that home as needed. Desktop,
-fingerprint greeter, screen sharing and physical devices still need laptop
-acceptance testing.
+## Dux and Home Manager
+
+Niri uses the complete Dux 2.0 suite: Shell, Greeter, Search, GOP, Calendar and
+Files. The inputs are pinned to the v2.0.0 releases in `flake.lock`. Quickshell
+comes from the existing nixpkgs pin. The full upstream Dux Niri config and its
+generated includes validate and run with the pinned Niri 26.04; the documentation's
+26.05 requirement does not correspond to a newer published upstream release.
+
+`hosts/framework/home/niri.nix` manages the Niri user's environment through Home
+Manager. The primary KDE configuration has no Home Manager users or activation
+service, and keeps its own greeter. The CLI is available system-wide; use
+`framework-rebuild` to build and apply the integrated Home Manager configuration.
+Do not run a standalone `home-manager switch` against the primary home.
+
+When the Niri specialisation boots, `/home` is mounted before account activation.
+`home-manager-okhsunrog.service` applies the profile to that mounted home before
+user sessions are permitted. Existing managed-path collisions are backed up with
+`.before-dux-20261024`; unmanaged files and application credentials are preserved.
+A snapshot of the Niri home before this migration is recorded locally in
+`~/tmp_zfs/codex_tmp/dux-home-manager/home-snapshot.txt`.
+
+Home Manager owns `~/.config/niri/config.kdl` and seeds Dux's generated includes
+only when missing. The includes under `~/.config/niri/dms/`, Dux settings, session
+state, calendar accounts and Files settings remain writable. Changes made in the
+Dux UI persist in the experimental home. The directory MIME association is
+updated without replacing browser or other existing MIME choices.
+
+Dux Shell starts once, through the Home Manager systemd service. Dux Calendar,
+Files and Search have their own user services tied to the graphical session.
+Calendar events use Dux Calendar, with the legacy khal backend omitted. Files
+provides both the folder handler and the file chooser portal. TuneD continues to
+provide the existing power-profile API. KWallet remains the Secret Service
+provider for the cloned application keys, with no PAM password-unlock helper.
+No wallet password is assigned or changed.
+
+Dux Greeter replaces tuigreet in this specialisation. Its theme sync copies only
+the designated Dux settings, session and theme-cache files into
+`/var/lib/dms-greeter`; its runtime log is `greeter.log` in that directory. PAM
+policy stays managed by NixOS. Waybar, Fuzzel, Mako, Swaylock, Foot and tuigreet
+are no longer explicitly installed or started in the Niri configuration.
+
+Default Dux bindings include Super+Enter for Rio, Super+Space for the launcher,
+Super+D for Dash, Super+Comma for settings, Super+V for clipboard history and
+Super+Alt+L for locking. The US/Russian layout switch remains Caps Lock.
+
+The encrypted-pool VM test exercises Home Manager activation only in the cloned
+home and checks its absence after returning to the primary home. Virtual GUI
+checks cover the Dux Shell on nested Niri, Calendar, Files and Greeter loading.
+Physical greeter authentication, fingerprint, suspend and monitor behaviour
+still require acceptance after booting the laptop into this specialisation.
 
 ## Retiring an experiment
 

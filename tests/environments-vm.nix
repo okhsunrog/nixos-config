@@ -1,6 +1,7 @@
 {
   pkgs,
   nixpkgs,
+  home-manager,
   zbm-rs,
   system,
 }:
@@ -9,6 +10,7 @@ let
     (import "${nixpkgs}/nixos/lib/eval-config.nix" {
       inherit system;
       modules = [
+        home-manager.nixosModules.home-manager
         zbm-rs.nixosModules.default
         ../modules/framework-environments
         "${nixpkgs}/nixos/modules/profiles/qemu-guest.nix"
@@ -46,6 +48,8 @@ let
             group = "tester";
           };
           users.groups.tester.gid = 1000;
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
           framework.environments = {
             enable = true;
             user = "tester";
@@ -66,6 +70,12 @@ let
             };
             variants.experiment = {
               environment.etc.environment-marker.text = "experiment";
+              home-manager.users.tester = {
+                home.username = "tester";
+                home.homeDirectory = "/home/tester";
+                home.stateVersion = "26.05";
+                xdg.configFile."home-manager-environment".text = "experiment-only";
+              };
             };
           };
           environment.etc.environment-marker.text = pkgs.lib.mkDefault "kde";
@@ -132,11 +142,13 @@ pkgs.testers.runNixOSTest {
     assert "testpool/nixos/home@experiment" in status
     machine.succeed("echo shared > /home/tester/Nextcloud/marker; echo tmp-shared > /home/tester/tmp_zfs/marker; echo main-later > /home/tester/.config/desktop")
     boot("${target}/specialisation/experiment", "/")
+    machine.wait_for_unit("home-manager-tester.service")
+    machine.succeed("test $(cat /home/tester/.config/home-manager-environment) = experiment-only; test ! -e /var/lib/framework-environments/primary-home/tester/.config/home-manager-environment")
     machine.succeed("test $(cat /etc/environment-marker) = experiment; test $(findmnt -n -o SOURCE --mountpoint /home) = testpool/nixos/home-experiment; test $(cat /home/tester/.config/desktop) = main; test $(cat /home/tester/Nextcloud/marker) = shared; test $(cat /home/tester/tmp_zfs/marker) = tmp-shared; framework-home preflight --action switch")
     machine.succeed("test $(cat /home/tester/code/nixos-config/marker) = canonical; echo shared-edit > /home/tester/code/nixos-config/marker; echo experiment > /home/tester/.config/desktop")
     machine.fail(helper + " preflight --action switch")
     boot("${target}", "/")
-    machine.succeed("test $(cat /home/tester/.config/desktop) = main-later; test $(cat /home/tester/code/nixos-config/marker) = shared-edit; framework-home preflight --action switch")
+    machine.succeed("test ! -e /home/tester/.config/home-manager-environment; test $(cat /home/tester/.config/desktop) = main-later; test $(cat /home/tester/code/nixos-config/marker) = shared-edit; framework-home preflight --action switch")
     machine.fail("journalctl -b --no-pager | grep 'Duplicate entry'")
     machine.shutdown()
   '';

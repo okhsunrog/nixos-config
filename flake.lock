@@ -98,6 +98,178 @@
         "type": "github"
       }
     },
+    "dank-qml-common": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1792513666,
+        "narHash": "sha256-RDqPdPrM5lnwRrfFGLz3IwgTjCV2Ie+nrTD3ldj1t/s=",
+        "owner": "duxlabs-dev",
+        "repo": "dux-qml-common",
+        "rev": "ebf5e6c002da1bdaa4aaa2f319fea7b8507abc42",
+        "type": "github"
+      },
+      "original": {
+        "owner": "duxlabs-dev",
+        "repo": "dux-qml-common",
+        "type": "github"
+      }
+    },
+    "dux-calendar": {
+      "inputs": {
+        "dank-qml-common": [
+          "dux-shell",
+          "dank-qml-common"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792524215,
+        "narHash": "sha256-8iUIl8cpPLrHPZQFh7tDL3WNiD/oJulrqGExG97YJ7Q=",
+        "owner": "duxlabs-dev",
+        "repo": "dux-calendar",
+        "rev": "390fa4f7cbd665ec45e6f28754b9c9af1a96e46f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "duxlabs-dev",
+        "ref": "v2.0.0",
+        "repo": "dux-calendar",
+        "type": "github"
+      }
+    },
+    "dux-files": {
+      "inputs": {
+        "dank-qml-common": [
+          "dux-shell",
+          "dank-qml-common"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792524213,
+        "narHash": "sha256-AucOD9s3dmDbHm5X7H+NunCXG7c3nKfoDVN/uDvKknY=",
+        "owner": "duxlabs-dev",
+        "repo": "dux-files",
+        "rev": "62f2d0983177b7853f435f2417d551fbf348c1fa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "duxlabs-dev",
+        "ref": "v2.0.0",
+        "repo": "dux-files",
+        "type": "github"
+      }
+    },
+    "dux-gop": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792524211,
+        "narHash": "sha256-GTDomQTBU132DVjqX/o3cZBo9ylUWLvUJ74PSlahgTo=",
+        "owner": "duxlabs-dev",
+        "repo": "dux-gop",
+        "rev": "43a29526bb651c372c3291eb62c3e0cec3bca6e0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "duxlabs-dev",
+        "ref": "v2.0.0",
+        "repo": "dux-gop",
+        "type": "github"
+      }
+    },
+    "dux-greeter": {
+      "inputs": {
+        "dank-qml-common": [
+          "dux-shell",
+          "dank-qml-common"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792524212,
+        "narHash": "sha256-uSaCS7bdByk/8mPSlsxxsK830vw1gErdwQ7olG8hCY4=",
+        "owner": "duxlabs-dev",
+        "repo": "dux-greeter",
+        "rev": "0044526f90b584916548f0a17dbf31764a6db530",
+        "type": "github"
+      },
+      "original": {
+        "owner": "duxlabs-dev",
+        "ref": "v2.0.0",
+        "repo": "dux-greeter",
+        "type": "github"
+      }
+    },
+    "dux-search": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792524211,
+        "narHash": "sha256-GOnNob/tex//NBchfVXAjzk9Gw4K+GxyVmZBZqx0nLA=",
+        "owner": "duxlabs-dev",
+        "repo": "dux-search",
+        "rev": "9f706cad94f23dd2fd8642a2c06796fa0786e60d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "duxlabs-dev",
+        "ref": "v2.0.0",
+        "repo": "dux-search",
+        "type": "github"
+      }
+    },
+    "dux-shell": {
+      "inputs": {
+        "dank-qml-common": "dank-qml-common",
+        "flake-compat": "flake-compat",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792523829,
+        "narHash": "sha256-hyWdbsyOGXsJxvXG4Tqg0uRI1s3JwPi8DKyWips3Ta8=",
+        "owner": "duxlabs-dev",
+        "repo": "dux-shell",
+        "rev": "9b413296b16721f7679fb62e624cb1ed2433fa58",
+        "type": "github"
+      },
+      "original": {
+        "owner": "duxlabs-dev",
+        "ref": "v2.0.0",
+        "repo": "dux-shell",
+        "type": "github"
+      }
+    },
+    "flake-compat": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767039857,
+        "narHash": "sha256-vNpUSpF5Nuw8xvDLj2KCwwksIbjua2LZCqhV1LNRDns=",
+        "owner": "NixOS",
+        "repo": "flake-compat",
+        "rev": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": [
@@ -155,6 +327,26 @@
       }
     },
     "home-manager": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792818371,
+        "narHash": "sha256-yhEZAzZRNvzYpoAlyFY3wM75V9BmkIXJIueof8S5gOg=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "2cd3234928f60bbff695a7ee56115ef7799c47cd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
+    "home-manager_2": {
       "inputs": {
         "nixpkgs": [
           "zen-browser",
@@ -298,8 +490,15 @@
       "inputs": {
         "arctern": "arctern",
         "ayugram-plengine": "ayugram-plengine",
+        "dux-calendar": "dux-calendar",
+        "dux-files": "dux-files",
+        "dux-gop": "dux-gop",
+        "dux-greeter": "dux-greeter",
+        "dux-search": "dux-search",
+        "dux-shell": "dux-shell",
         "floppa-deployment": "floppa-deployment",
         "floppa-vpn": "floppa-vpn",
+        "home-manager": "home-manager",
         "host-secrets": "host-secrets",
         "insyde-src": "insyde-src",
         "nixos-hardware": "nixos-hardware",
@@ -421,7 +620,7 @@
     },
     "zen-browser": {
       "inputs": {
-        "home-manager": "home-manager",
+        "home-manager": "home-manager_2",
         "nixpkgs": [
           "nixpkgs"
         ]

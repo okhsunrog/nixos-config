@@ -1,67 +1,59 @@
-{ lib, pkgs, ... }:
 {
+  config,
+  lib,
+  pkgs,
+  dux-greeter,
+  dux-files,
+  ...
+}:
+{
+  imports = [
+    dux-greeter.nixosModules.default
+    dux-files.nixosModules.default
+  ];
   programs.niri.enable = true;
   programs.niri.useNautilus = false;
   programs.xwayland.enable = true;
-  # Keep the cloned Plasma wallet as the provider for existing application keys.
-  # greetd delegates its auth and session stacks to PAM login.
-  services.gnome.gnome-keyring.enable = lib.mkForce false;
-  security.pam.services.login.kwallet = {
+  services.displayManager.defaultSession = "niri";
+  programs.dms-greeter = {
     enable = true;
-    forceRun = true;
+    compositor.name = "niri";
+    configHome = "/home/okhsunrog";
+    logs = {
+      save = true;
+      path = "/var/lib/dms-greeter/greeter.log";
+    };
   };
+  home-manager.users.okhsunrog = import ../home/niri.nix;
+  programs.dux-files = {
+    enable = true;
+    # The Home Manager module owns the single session service.
+    systemd.enable = false;
+    portal = {
+      enable = true;
+      preferred = true;
+      desktop = "niri";
+    };
+  };
+  xdg.portal.config.niri."org.freedesktop.impl.portal.FileChooser" = lib.mkForce "dfiles";
+  # Preserve the user's existing passwordless wallet and application keys.
+  services.gnome.gnome-keyring.enable = lib.mkForce false;
   services.dbus.packages = [ pkgs.kdePackages.kwallet ];
-  systemd.packages = [ pkgs.kdePackages.kwallet-pam ];
-  systemd.user.services.plasma-kwallet-pam.wantedBy = [ "graphical-session.target" ];
   systemd.user.services.niri-secret-service = {
     description = "KWallet Secret Service for the Niri session";
     partOf = [ "graphical-session.target" ];
     wantedBy = [ "graphical-session.target" ];
-    after = [ "plasma-kwallet-pam.service" ];
     serviceConfig.ExecStart = "${pkgs.kdePackages.kwallet}/bin/ksecretd";
   };
   xdg.portal.extraPortals = [ pkgs.kdePackages.kwallet ];
   xdg.portal.config.niri."org.freedesktop.impl.portal.Secret" = lib.mkForce "kwallet";
-  services.greetd = {
-    enable = true;
-    settings.default_session.command = "${pkgs.tuigreet}/bin/tuigreet --cmd niri-session";
-  };
-  environment.systemPackages = with pkgs; [
-    kdePackages.kwalletmanager
-    foot
-    fuzzel
-    waybar
-    mako
-    swaylock
-    xwayland-satellite
+  services.udisks2.enable = true;
+  services.gvfs.enable = true;
+  services.accounts-daemon.enable = true;
+  security.polkit.enable = true;
+  # TuneD already provides the power-profiles D-Bus API and UPower on this host.
+  environment.systemPackages = [
+    pkgs.kdePackages.kwalletmanager
+    pkgs.xwayland-satellite
   ];
-  environment.etc."niri/config.kdl".text = ''
-    input {
-      keyboard {
-        xkb {
-          layout "us,ru"
-          options "grp:caps_toggle"
-        }
-      }
-      touchpad { tap; natural-scroll; }
-    }
-    spawn-at-startup "waybar"
-    spawn-at-startup "mako"
-    binds {
-      Mod+Return { spawn "rio"; }
-      Mod+D { spawn "fuzzel"; }
-      Mod+Q { close-window; }
-      Mod+Left { focus-column-left; }
-      Mod+Right { focus-column-right; }
-      Mod+Up { focus-window-up; }
-      Mod+Down { focus-window-down; }
-      Mod+Shift+Left { move-column-left; }
-      Mod+Shift+Right { move-column-right; }
-      Mod+Page_Down { focus-workspace-down; }
-      Mod+Page_Up { focus-workspace-up; }
-      Mod+Shift+E { quit; }
-      Mod+Shift+Slash { show-hotkey-overlay; }
-      Mod+L { spawn "swaylock"; }
-    }
-  '';
 }

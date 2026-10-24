@@ -15,6 +15,37 @@
       url = "git+https://fgj.okhsunrog.dev/okhsunrog/nixos-secrets.git?ref=main";
       flake = false;
     };
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    dux-shell = {
+      url = "github:duxlabs-dev/dux-shell/v2.0.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    dux-greeter = {
+      url = "github:duxlabs-dev/dux-greeter/v2.0.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.dank-qml-common.follows = "dux-shell/dank-qml-common";
+    };
+    dux-search = {
+      url = "github:duxlabs-dev/dux-search/v2.0.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    dux-gop = {
+      url = "github:duxlabs-dev/dux-gop/v2.0.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    dux-calendar = {
+      url = "github:duxlabs-dev/dux-calendar/v2.0.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.dank-qml-common.follows = "dux-shell/dank-qml-common";
+    };
+    dux-files = {
+      url = "github:duxlabs-dev/dux-files/v2.0.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.dank-qml-common.follows = "dux-shell/dank-qml-common";
+    };
     rio-src = {
       url = "github:okhsunrog/rio/nixos-main-with-fixes";
       flake = false;
@@ -55,6 +86,13 @@
     {
       self,
       rio-src,
+      home-manager,
+      dux-shell,
+      dux-greeter,
+      dux-search,
+      dux-gop,
+      dux-calendar,
+      dux-files,
       nixpkgs,
       nixos-hardware,
       sops-nix,
@@ -80,6 +118,13 @@
         specialArgs = {
           rio = self.packages.${system}.rio;
           inherit
+            home-manager
+            dux-shell
+            dux-greeter
+            dux-search
+            dux-gop
+            dux-calendar
+            dux-files
             zbm-rs
             zbm-rescue
             signed-modules
@@ -103,6 +148,18 @@
       };
       formatter.${system} = pkgs.nixfmt-tree;
       packages.${system} = (import ./packages/corporate.nix { inherit pkgs; }) // {
+        dux-suite = pkgs.symlinkJoin {
+          name = "dux-suite-2.0.0";
+          paths = [
+            dux-shell.packages.${system}.default
+            dux-greeter.packages.${system}.default
+            dux-search.packages.${system}.default
+            dux-gop.packages.${system}.default
+            dux-calendar.packages.${system}.default
+            dux-files.packages.${system}.default
+            pkgs.quickshell
+          ];
+        };
         rio = import ./packages/rio.nix {
           inherit pkgs;
           src = rio-src;
@@ -121,6 +178,7 @@
           inherit
             pkgs
             nixpkgs
+            home-manager
             zbm-rs
             system
             ;
