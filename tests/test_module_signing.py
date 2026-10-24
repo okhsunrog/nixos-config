@@ -227,12 +227,15 @@ class RebuildStages(unittest.TestCase):
             'echo prepare-efi >> "$REBUILD_LOG"; exit "${FAIL_EFI_SIGN:-0}"',
         )
         self.write("bin/sudo", 'exec "$@"')
+        self.write("bin/uv", 'echo preflight >> "$REBUILD_LOG"; exit "${FAIL_PREFLIGHT:-0}"')
         self.write(
             "bin/nix",
             """
 echo "nix $*" >> "$REBUILD_LOG"
 if [[ $1 == build ]]; then
-    if [[ $2 == *frameworkModuleSigningPlan ]]; then
+    if [[ $2 == *frameworkEnvironments ]]; then
+        ln -sfn "$PWD/plan" result-environments
+    elif [[ $2 == *frameworkModuleSigningPlan ]]; then
         ln -sfn "$PWD/plan" result-module-signing
     elif [[ $2 == *frameworkEfiPlan ]]; then
         ln -sfn "$PWD/plan" result-efi-plan
@@ -262,6 +265,14 @@ fi
             capture_output=True,
             check=False,
         )
+
+    def test_preflight_failure_prevents_signing_and_publication(self):
+        result = self.run_stage(FAIL_PREFLIGHT="46")
+        self.assertEqual(result.returncode, 46)
+        log = (self.root / "log").read_text()
+        self.assertNotIn("sign\n", log)
+        self.assertNotIn("flake update", log)
+        self.assertNotIn("system.build.toplevel", log)
 
     def test_signing_failure_prevents_lock_refresh_and_system_build(self):
         result = self.run_stage(FAIL_SIGN="42")

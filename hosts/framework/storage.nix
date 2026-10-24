@@ -18,13 +18,6 @@
     fsType = "zfs";
     options = [ "zfsutil" ];
   };
-  fileSystems."/home" = {
-    device = "novafs/nixos0/data/home";
-    fsType = "zfs";
-    options = [ "zfsutil" ];
-    # Account activation creates home directories before switch-root.
-    neededForBoot = true;
-  };
   fileSystems."/home/okhsunrog/Nextcloud" = {
     device = "novafs/nextcloud";
     fsType = "zfs";

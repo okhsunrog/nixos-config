@@ -1,13 +1,15 @@
 # Arctern: Arch to NixOS
 
 The active sender is now NixOS. The native package and service come from the
-pinned Arctern input. `hosts/framework/arctern.toml` is the non-secret runtime
-configuration; SOPS decrypts the existing replication identity from the private
+pinned Arctern input. `hosts/framework/arctern.toml` supplies the non-secret defaults and jobs;
+`hosts/framework/environments.nix` supplies their dataset selections. The generated
+runtime configuration is `/etc/arctern/arctern.toml`; SOPS decrypts the existing replication identity from the private
 `host-secrets` input. Mutable history and the administrator token remain in
 `/var/lib/arctern`, copied from Arch with their original permissions.
 
-Local snapshots cover `novafs/nixos0/root` and `novafs/nixos0/data/home` every
-15 minutes, using the previous retention grid. Only home is sent to Mira.
+Local snapshots cover `novafs/nixos0/data/home` every 15 minutes, using the
+previous retention grid. Root rollback uses NixOS generations. The primary home
+is sent to Mira; enabled experiments default to local snapshots only.
 Nextcloud stays excluded because its server has its own backup history;
 temporary build datasets are not part of home. Automatic replication uses the
 LAN route at most once a day. The WireGuard route still requires Send now.

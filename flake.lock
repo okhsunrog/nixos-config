@@ -388,11 +388,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1792427100,
-        "narHash": "sha256-7PVHi9jy0/DFr/ELMFV65NK2TuERjTIu96PGp4PRGek=",
+        "lastModified": 1792776355,
+        "narHash": "sha256-TG/qAOcgWyjOjOK9Y//ST3NoPOpdBrlhrZ9dOSVaTTI=",
         "owner": "okhsunrog",
         "repo": "zbm-rs",
-        "rev": "9909c0a9698fbeda023f94c8b584fae312aaee38",
+        "rev": "e6402dee79b129dec08d3e74b02cbc3a43d93c13",
         "type": "github"
       },
       "original": {

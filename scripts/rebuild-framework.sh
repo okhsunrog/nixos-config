@@ -23,6 +23,10 @@ mkdir -p .work
 exec 9>.work/framework-rebuild.lock
 flock -n 9 || { echo 'Another Framework rebuild is already running.' >&2; exit 1; }
 base="$repo#nixosConfigurations.framework.config"
+nix build "$base.system.build.frameworkEnvironments" --out-link result-environments "$@"
+uv run --offline --no-cache --no-project --no-managed-python \
+    "$repo/modules/framework-environments/home.py" \
+    --manifest "$(readlink -e result-environments)" preflight --action "$action"
 nix build "$base.system.build.frameworkModuleSigningPlan" \
     --out-link result-module-signing "$@"
 sudo "$repo/scripts/sign-framework-modules.sh" "$(readlink -e result-module-signing)"
@@ -33,6 +37,10 @@ nix build "$base.system.build.frameworkEfiPlan" --out-link result-efi-plan "$@"
 sudo "$repo/scripts/prepare-framework-loader.sh" "$(readlink -e result-efi-plan)"
 nix build "$base.system.build.toplevel" --out-link result-framework "$@"
 system=$(readlink -e result-framework)
+# Recheck the exact closure and live mount after a potentially long build.
+uv run --offline --no-cache --no-project --no-managed-python \
+    "$repo/modules/framework-environments/home.py" \
+    --manifest "$system/etc/framework-environments.json" preflight --action "$action"
 if [[ $action == build ]]; then
     echo "Built $system; the installed system is unchanged."
     exit 0

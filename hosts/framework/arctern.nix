@@ -1,6 +1,8 @@
 {
   config,
   host-secrets,
+  lib,
+  pkgs,
   ...
 }:
 {
@@ -8,7 +10,13 @@
     enable = true;
     configFile = "/etc/arctern/arctern.toml";
   };
-  environment.etc."arctern/arctern.toml".source = ./arctern.toml;
+  environment.etc."arctern/arctern.toml".source = (pkgs.formats.toml { }).generate "arctern.toml" (
+    import ../../modules/framework-environments/backups.nix {
+      inherit lib;
+      entries = config.framework.environments.entries;
+      base = builtins.fromTOML (builtins.readFile ./arctern.toml);
+    }
+  );
 
   sops.secrets.arctern-ssh-key = {
     sopsFile = "${host-secrets}/arctern-ssh-key.enc";
@@ -24,7 +32,7 @@
   systemd.services.arctern = {
     requires = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
-    restartTriggers = [ ./arctern.toml ];
+    restartTriggers = [ config.environment.etc."arctern/arctern.toml".source ];
     unitConfig.ConditionPathExists = config.sops.secrets.arctern-ssh-key.path;
   };
   programs.ssh.extraConfig = ''

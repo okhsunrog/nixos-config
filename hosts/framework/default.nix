@@ -3,6 +3,7 @@
   imports = [
     ./hardware.nix
     ./storage.nix
+    ./environments.nix
     ./desktop.nix
     ./virtualisation.nix
     ./secureboot.nix

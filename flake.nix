@@ -98,14 +98,26 @@
       formatter.${system} = pkgs.nixfmt-tree;
       packages.${system} = (import ./packages/corporate.nix { inherit pkgs; }) // {
         installer = pkgs.nixos-install-tools;
+        boot-environment-test = zbm-rs.checks.${system}.native-nixos;
         flyline = import ./packages/flyline.nix { inherit pkgs; };
         inherit (pkgs) age sops;
       };
       checks.${system} = {
+        environments = import ./tests/environments.nix {
+          inherit pkgs;
+          framework = self.nixosConfigurations.framework;
+        };
+        environments-vm = import ./tests/environments-vm.nix {
+          inherit
+            pkgs
+            nixpkgs
+            zbm-rs
+            system
+            ;
+        };
         plasma-login-auth = import ./tests/plasma-login-auth.nix { inherit pkgs; };
         module-signing = import ./tests/module-signing.nix { inherit pkgs zbm-rs; };
         module-signing-vm = import ./tests/module-signing-vm.nix { inherit pkgs zbm-rs; };
-        boot-environment = zbm-rs.checks.${system}.native-nixos;
         novpn = import ./tests/novpn.nix { inherit pkgs; };
         secrets = import ./tests/secrets.nix { inherit pkgs sops-nix; };
         corporate = import ./tests/corporate.nix { inherit pkgs; };

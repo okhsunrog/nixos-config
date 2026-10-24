@@ -10,6 +10,7 @@ pkgs.testers.runNixOSTest {
     }:
     {
       imports = [ ../modules/plasma-login-auth.nix ];
+      framework.plasmaLoginAuth.enable = true;
       users.users.tester = {
         isNormalUser = true;
         initialPassword = "test-only-password";

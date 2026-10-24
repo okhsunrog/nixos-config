@@ -27,6 +27,14 @@ requires a corresponding configuration change. An independent clone with its
 own home needs updated root/home dataset names and a rebuilt generation before
 its first boot.
 
+## Desktop experiments
+
+The [environment workflow](docs/desktop-environments.md) combines named NixOS
+specialisations with separate home datasets. KDE stays primary; the Niri
+specialisation uses a separately prepared clone of the primary home. Shared checkouts,
+Nextcloud and tmp_zfs retain their normal paths. Use `framework-home status` to
+inspect dependencies and `framework-rebuild boot` to prepare a reboot.
+
 ## Build and verify
 
 From Arch, where Nix is already installed:
@@ -36,7 +44,7 @@ export NIX_CONFIG='experimental-features = nix-command flakes'
 nix build .#nixosConfigurations.framework.config.system.build.toplevel \
   --out-link result-framework --max-jobs 2 --cores 2
 nix build .#installer --out-link result-installer
-nix build .#checks.x86_64-linux.boot-environment --out-link result-vm-test
+nix build .#boot-environment-test --out-link result-vm-test
 ```
 
 The native zbm-rs VM check uses a disposable encrypted ZFS disk. It installs

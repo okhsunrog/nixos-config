@@ -28,7 +28,7 @@ name = "wg"
 ssh_target = "arctern-mira-wg"
 auto = false
 
-# Snapshot only the explicitly listed datasets. Bare paths are exact,
+# Filesystem lists are generated from environments.nix. Bare paths are exact,
 # non-recursive matches, so Docker, VM, and future datasets stay out.
 # Root rollback uses NixOS generations; keep /nix build caches out of snapshots.
 # novafs/nextcloud (~/Nextcloud, shared between boot environments) is
@@ -37,7 +37,6 @@ auto = false
 [[jobs]]
 type = "snap"
 name = "snapshot_nixos0"
-filesystems = { "novafs/nixos0/data/home" = true }
 
 # Один job, один пир с failover-маршрутами; цикл каждые 15 минут.
 [[jobs]]
@@ -50,7 +49,6 @@ parallel = 2
 # 15-минутная история живёт локально для быстрых откатов, mira получает
 # один снапшот в сутки, и WG-маршрут не тащит внутридневной churn.
 replicate = "latest"
-filesystems = { "novafs/nixos0/data/home" = true }
 [jobs.target]
 root_fs = "okdata/backups/nova"
 # send flags: all four default true (raw+embedded+compressed+large_blocks)
