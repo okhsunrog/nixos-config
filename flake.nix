@@ -172,6 +172,7 @@
         inherit (pkgs) age sops;
       };
       checks.${system} = {
+        private-inputs = import ./tests/private-inputs.nix { inherit pkgs; };
         environments = import ./tests/environments.nix {
           inherit pkgs;
           framework = self.nixosConfigurations.framework;

@@ -8,6 +8,10 @@ let
   deployment = builtins.fromJSON (builtins.readFile floppa-deployment);
 in
 {
+  # Reading JSON during evaluation does not retain its source in the closure.
+  # Keep the pinned private input available for rebuilds after garbage collection.
+  system.extraDependencies = [ floppa-deployment ];
+
   services.floppa-vpn = {
     enable = true;
     autostart = true;

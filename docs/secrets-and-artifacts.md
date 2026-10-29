@@ -79,8 +79,8 @@ an argument, an environment variable recorded in a derivation, or `flake.lock`.
 
 After normal NixOS boot, run `./scripts/rebuild-framework.sh` as the regular user.
 It prepares the matching signed modules before installing a boot generation;
-sudo is used only for runtime signing and installation. The installed Nix daemon
-uses the runtime netrc without the bootstrap wrapper. Both private Git input
+sudo is used for missing private inputs, runtime signing and installation. The
+installed Nix daemon uses the runtime netrc without the bootstrap wrapper. Both private Git input
 revision and package hashes are pinned. Updating secrets means committing and
 pushing `nixos-secrets`, then `nix flake update host-secrets` in `nixos-config`.
 Floppa's non-secret deployment JSON is a separate `flake = false` file input,
@@ -98,9 +98,20 @@ sudo nix flake update floppa-deployment --output-lock-file /var/lib/zbm-rs-publi
 cp /var/lib/zbm-rs-public/framework-inputs.lock flake.lock
 ```
 
-Normal builds use the pinned store input; no token is copied into the repository.
-On a fresh machine, authenticated input prefetch is required before an offline
-build, just as the private Git input must already be available.
+The rebuild wrapper runs `scripts/prefetch-framework-inputs.sh` before evaluating
+the configuration. If the pinned deployment file is absent, it fetches it with
+root's existing netrc and verifies the NAR hash from `flake.lock`. A hash mismatch
+aborts the rebuild without updating the lockfile. Existing store inputs need no
+authenticated download. No token is copied into the repository or exposed to the
+regular user.
+
+The deployment file is retained in `system.extraDependencies`, so garbage
+collection preserves it for every retained system generation. The helper also
+creates `.work/floppa-deployment` as a GC root, protecting build-only runs and
+the interval before a new generation is installed. The private Git input must
+still be available through the existing Git authentication or local cache on a
+fresh machine. Initial provisioning from another OS uses the bootstrap wrapper
+above; an offline build requires its inputs to be prefetched first.
 
 Updating a binary means publishing a new package version and updating
 `packages/artifacts.json`, never silently replacing an existing pinned version.

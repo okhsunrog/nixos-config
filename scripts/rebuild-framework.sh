@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Build/evaluate with the owner's cache and Git credentials; elevate only signing
-# and system installation. No private key is ever an input to a derivation.
+# Build/evaluate with the owner's cache and Git credentials. Elevate private
+# input downloads, signing and installation; keys never enter derivations.
 set -euo pipefail
 if [[ $EUID == 0 ]]; then
     echo 'Run this command as your regular user, without sudo.' >&2
@@ -22,6 +22,7 @@ cd "$repo"
 mkdir -p .work
 exec 9>.work/framework-rebuild.lock
 flock -n 9 || { echo 'Another Framework rebuild is already running.' >&2; exit 1; }
+"$repo/scripts/prefetch-framework-inputs.sh"
 base="$repo#nixosConfigurations.framework.config"
 nix build "$base.system.build.frameworkEnvironments" --out-link result-environments "$@"
 uv run --offline --no-cache --no-project --no-managed-python \

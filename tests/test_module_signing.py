@@ -219,6 +219,10 @@ class RebuildStages(unittest.TestCase):
         )
         shutil.copyfile(runner, self.root / "scripts/rebuild-framework.sh")
         self.write(
+            "scripts/prefetch-framework-inputs.sh",
+            'echo prefetch >> "$REBUILD_LOG"; exit "${FAIL_PREFETCH:-0}"',
+        )
+        self.write(
             "scripts/sign-framework-modules.sh",
             'echo sign >> "$REBUILD_LOG"; exit "${FAIL_SIGN:-0}"',
         )
@@ -265,6 +269,11 @@ fi
             capture_output=True,
             check=False,
         )
+
+    def test_input_failure_prevents_evaluation_and_signing(self):
+        result = self.run_stage(FAIL_PREFETCH="47")
+        self.assertEqual(result.returncode, 47)
+        self.assertEqual((self.root / "log").read_text(), "prefetch\n")
 
     def test_preflight_failure_prevents_signing_and_publication(self):
         result = self.run_stage(FAIL_PREFLIGHT="46")
