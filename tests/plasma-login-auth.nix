@@ -1,77 +1,64 @@
-{ pkgs }:
+{ pkgs, framework }:
+let
+  lib = pkgs.lib;
+  kde = framework.config;
+  preview = framework.extendModules {
+    modules = [ ({ lib, ... }: { framework.environments.entries.niri.enable = lib.mkForce true; }) ];
+  };
+  niri = preview.config.specialisation.niri.configuration;
+  fingerprint = pkgs.writeShellScript "test-fingerprint" ''
+    ${pkgs.coreutils}/bin/touch /run/fingerprint-requested
+    test -e /run/fingerprint-accepted
+  '';
+  # Test the actual host-generated PAM stacks. Only the physical fingerprint
+  # module is replaced; passwords still go through real pam_unix in the VM.
+  pamService = cfg: name: {
+    text = lib.mkForce (
+      builtins.replaceStrings
+        [ "${cfg.services.fprintd.package}/lib/security/pam_fprintd.so" ]
+        [ "${pkgs.pam}/lib/security/pam_exec.so quiet ${fingerprint}" ]
+        cfg.security.pam.services.${name}.text
+    );
+  };
+in
 pkgs.testers.runNixOSTest {
-  name = "plasma-login-password-first";
-  nodes.machine =
-    {
-      config,
-      lib,
-      pkgs,
-      ...
-    }:
-    {
-      imports = [ ../modules/plasma-login-auth.nix ];
-      framework.plasmaLoginAuth.enable = true;
-      users.users.tester = {
-        isNormalUser = true;
-        initialPassword = "test-only-password";
-      };
-      environment.systemPackages = [ pkgs.pamtester ];
-      security.pam.services = {
-        login.kwallet.enable = true;
-        # Match the upstream greeter's substack without starting a desktop.
-        plasmalogin = {
-          useDefaultRules = false;
-          rules.auth.login = {
-            order = 10100;
-            control = "substack";
-            modulePath = "login";
-          };
-          rules.account.login = {
-            order = 10100;
-            control = "include";
-            modulePath = "login";
-          };
-        };
-        plasmalogin-auth = {
-          fprintAuth = true;
-          # Test-only fingerprint result. Real pam_unix still verifies the
-          # disposable user's password, and the production ordering is retained.
-          rules.auth.fprintd = {
-            modulePath = lib.mkForce "${config.security.pam.package}/lib/security/pam_exec.so";
-            args = [
-              "quiet"
-              (toString (
-                pkgs.writeShellScript "test-fingerprint" ''
-                  ${pkgs.coreutils}/bin/touch /run/fingerprint-requested
-                  test -e /run/fingerprint-accepted
-                ''
-              ))
-            ];
-          };
-        };
-      };
+  name = "desktop-password-login-independent-unlock";
+  nodes.machine = {
+    users.users.tester = {
+      isNormalUser = true;
+      initialPassword = "test-only-password";
     };
+    environment.systemPackages = [ pkgs.pamtester ];
+    security.pam.services =
+      lib.genAttrs [ "login" "plasmalogin" "plasmalogin-auth" "kde" "kde-fingerprint" ] (pamService kde)
+      // lib.genAttrs [ "greetd" "greetd-password" "dankshell" ] (pamService niri);
+  };
   testScript = ''
     machine.start()
     machine.wait_for_unit("multi-user.target")
-    machine.succeed("grep -F 'auth substack plasmalogin-auth' /etc/pam.d/plasmalogin")
 
-    # A valid password succeeds even when the fingerprint would fail.
-    machine.succeed("printf '%s\\n' test-only-password | pamtester plasmalogin tester authenticate acct_mgmt")
-    machine.succeed("test ! -e /run/fingerprint-requested")
-
-    # Failed password plus failed fingerprint must not admit the user.
-    machine.fail("printf '%s\\n' incorrect | pamtester plasmalogin tester authenticate")
-    machine.succeed("test -e /run/fingerprint-requested")
-    machine.succeed("rm /run/fingerprint-requested")
-
-    # Blank input can use the fingerprint fallback; it is not a second factor.
+    # Even an accepted fingerprint cannot bypass a greeter's password or run
+    # as a second prompt after a correct password.
     machine.succeed("touch /run/fingerprint-accepted")
-    machine.succeed("printf '\\n' | pamtester plasmalogin tester authenticate acct_mgmt")
-    machine.succeed("test -e /run/fingerprint-requested")
+    for service in ["plasmalogin", "greetd", "kde", "dankshell"]:
+        with subtest(f"{service}: password succeeds independently"):
+            machine.succeed(f"printf '%s\\n' test-only-password | pamtester {service} tester authenticate acct_mgmt")
+            machine.succeed("test ! -e /run/fingerprint-requested")
+        with subtest(f"{service}: invalid and blank passwords fail"):
+            machine.fail(f"printf '%s\\n' incorrect | pamtester {service} tester authenticate")
+            machine.fail(f"printf '\\n' | pamtester {service} tester authenticate")
+            machine.succeed("test ! -e /run/fingerprint-requested")
 
-    # Blank input by itself must still be rejected.
-    machine.succeed("rm /run/fingerprint-accepted")
-    machine.fail("printf '\\n' | pamtester plasmalogin tester authenticate")
+    with subtest("fingerprint unlock succeeds without a password"):
+        machine.succeed("pamtester kde-fingerprint tester authenticate acct_mgmt </dev/null")
+        machine.succeed("test -e /run/fingerprint-requested")
+        machine.succeed("rm /run/fingerprint-requested /run/fingerprint-accepted")
+
+    with subtest("failed fingerprint cannot fall through to password"):
+        machine.fail("printf '%s\\n' test-only-password | pamtester kde-fingerprint tester authenticate")
+        machine.succeed("test -e /run/fingerprint-requested")
+
+    with subtest("password still unlocks after a failed fingerprint"):
+        machine.succeed("printf '%s\\n' test-only-password | pamtester kde tester authenticate acct_mgmt")
   '';
 }

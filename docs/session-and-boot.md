@@ -1,27 +1,30 @@
 # Desktop wallet and default boot environment
 
-## Password and fingerprint login
+## Password login and fingerprint unlock
 
-`modules/plasma-login-auth.nix` gives Plasma Login Manager its own auth substack.
-A correct account password finishes authentication before the fingerprint
-module. Blank or incorrect password input falls through to the fingerprint
-alternative; failure of both is rejected. The upstream account, password-change
-and session stacks still use `login`.
+Graphical login requires the account password in both desktop environments.
+`modules/plasma-login-auth.nix` gives Plasma Login Manager its own password-only
+`plasmalogin-auth` substack. Dux Greeter uses greetd as its authentication/session
+backend; `hosts/framework/desktops/niri.nix` redirects its auth substack to
+`greetd-password`. Neither substack enables fingerprint authentication or empty
+passwords. Their account, password-change and session stacks still use `login`.
 
-This changes the greeter only. The screen lock uses its existing `kde` and
-`kde-fingerprint` PAM services; neither those nor the generic console `login`
-stack is modified. KWallet is independent of this choice of login method.
+Screen unlocking accepts either a password or a fingerprint independently. KDE
+uses `kde` for the password and `kde-fingerprint` for the fingerprint, with the
+password fallback removed from the latter. Dux Shell uses a NixOS-managed
+password-only `dankshell` service and its separate bundled fingerprint context.
+Home Manager merges this policy into Dux's writable settings: lock fingerprint
+enabled, greeter fingerprint and security-key authentication disabled, and the
+standard lock PAM path selected. Other Dux settings are preserved. The generic
+console `login` and `sudo` policies are unchanged.
 
-`nix build .#checks.x86_64-linux.plasma-login-auth` verifies the generated PAM
-stack in a disposable VM. It uses real password verification for a test account
-and a simulated fingerprint result, without accessing host credentials or the
-physical reader. Physical greeter interaction still requires a subsequent login.
-
-On 2026-10-20 the VM test passed all four cases, including the real optional
-KWallet PAM hook. The host configuration was built and activated. SHA-256 checks
-confirmed that `kde`, `kde-fingerprint` and console `login` were unchanged after
-activation. Plasma Login Manager, Floppa and Arctern retained their process IDs;
-the desktop session was not restarted.
+`nix build .#checks.x86_64-linux.plasma-login-auth` tests the actual generated
+host PAM stacks in a disposable VM. It checks correct, incorrect and blank
+passwords for both greeters and password unlock services, even when a simulated
+fingerprint would succeed. It also checks independent fingerprint unlock and
+password unlock after a fingerprint failure. The VM uses a disposable account;
+host credentials and the physical reader are not used. Physical greeter and
+lockscreen interaction still require acceptance on the laptop.
 
 ## KWallet
 

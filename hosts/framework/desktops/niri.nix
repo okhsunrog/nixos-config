@@ -24,6 +24,21 @@
       path = "/var/lib/dms-greeter/greeter.log";
     };
   };
+  # Dux Greeter uses greetd's PAM service. Override its auth substack rather
+  # than the generic login stack, which is also used by console logins.
+  security.pam.services = {
+    greetd.rules.auth.login.modulePath = lib.mkForce "greetd-password";
+    greetd-password = {
+      fprintAuth = false;
+      allowNullPassword = false;
+    };
+    # Dux Shell runs its own fingerprint PAM context alongside this password
+    # context, so either method can unlock without blocking the other.
+    dankshell = {
+      fprintAuth = false;
+      allowNullPassword = false;
+    };
+  };
   home-manager.users.okhsunrog = import ../home/niri.nix;
   programs.dux-files = {
     enable = true;

@@ -515,7 +515,7 @@
       "flake": false,
       "locked": {
         "lastModified": 1,
-        "narHash": "sha256-JjlKmMOc6wTjKRdtwzEWL6vuE8DCkwKNObTKBf6C39Q=",
+        "narHash": "sha256-O7wolvrn8yftWoj82xvCYDMvlzYJAvtxNKRgfUIU30c=",
         "path": "/var/lib/zbm-rs-public/framework-modules",
         "type": "path"
       },
@@ -606,12 +606,12 @@
       },
       "locked": {
         "lastModified": 0,
-        "narHash": "sha256-gJCWL9l51StJAcX0AbBOWZJQrGlzTYSpmfcACGwNZD4=",
-        "path": "/nix/store/hk5nwbb1vb57r0v2s9rwabxa0icqkpbg-source",
+        "narHash": "sha256-5ll1Uj7uhScAS2kcYG8otPJiePoXWGyEGgohD7NV9CA=",
+        "path": "/nix/store/5pfgpy7171dxqli5vzl011mbz362b9ya-source",
         "type": "path"
       },
       "original": {
-        "path": "/nix/store/hk5nwbb1vb57r0v2s9rwabxa0icqkpbg-source",
+        "path": "/nix/store/5pfgpy7171dxqli5vzl011mbz362b9ya-source",
         "type": "path"
       }
     },

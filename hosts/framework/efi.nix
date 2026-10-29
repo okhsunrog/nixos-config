@@ -41,6 +41,8 @@ let
     profile = "host-only";
     hardwareManifest = hardware;
     hostId = config.networking.hostId;
+    # Apply the same Intel CPU fixes before the loader kernel starts as in NixOS.
+    microcodeInitrd = "${config.hardware.cpu.intel.microcodePackage}/intel-ucode.img";
     # Retain symbols/line tables and read-only power/temperature telemetry while
     # investigating intermittent power loss during the passphrase prompt.
     rustProfile = {

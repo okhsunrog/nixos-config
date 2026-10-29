@@ -126,6 +126,15 @@ state, calendar accounts and Files settings remain writable. Changes made in the
 Dux UI persist in the experimental home. The directory MIME association is
 updated without replacing browser or other existing MIME choices.
 
+Niri installs `adw-gtk3` and selects Qt's `gtk3` platform theme in the user and
+compositor environment. In Dux Settings → Theme & Colors → Applications, use
+`Apply GTK colors` once to enable Dux's writable theme copies and GTK4 import.
+On homes cloned from KDE, remove the old `colors.css` imports from GTK3/GTK4
+`gtk.css` after backing them up; those palettes otherwise override Dux colors.
+Dux then switches `adw-gtk3` / `adw-gtk3-dark` with its light/dark mode, including
+GTK3 WebKit applications and Qt applications. The Settings portal alone does not
+set GTK3's theme. These settings belong only to the independent Niri home.
+
 Dux Shell starts once, through the Home Manager systemd service. Dux Calendar,
 Files and Search have their own user services tied to the graphical session.
 Calendar events use Dux Calendar, with the legacy khal backend omitted. Files
@@ -137,7 +146,11 @@ No wallet password is assigned or changed.
 Dux Greeter replaces tuigreet in this specialisation. Its theme sync copies only
 the designated Dux settings, session and theme-cache files into
 `/var/lib/dms-greeter`; its runtime log is `greeter.log` in that directory. PAM
-policy stays managed by NixOS. Waybar, Fuzzel, Mako, Swaylock, Foot and tuigreet
+policy stays managed by NixOS: Dux Greeter uses greetd with password-only login,
+while Dux Shell's lockscreen accepts a password or fingerprint independently.
+The `duxLockAuth` Home Manager activation merges the authentication settings
+without replacing other user preferences; see `session-and-boot.md`.
+Waybar, Fuzzel, Mako, Swaylock, Foot and tuigreet
 are no longer explicitly installed or started in the Niri configuration.
 
 Default Dux bindings include Super+Enter for Rio, Super+Space for the launcher,
