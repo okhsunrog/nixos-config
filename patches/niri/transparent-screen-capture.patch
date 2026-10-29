@@ -1,0 +1,462 @@
+diff --git a/docs/wiki/Configuration:-Layer-Rules.md b/docs/wiki/Configuration:-Layer-Rules.md
+index 0b2ccf34..075f37ed 100644
+--- a/docs/wiki/Configuration:-Layer-Rules.md
++++ b/docs/wiki/Configuration:-Layer-Rules.md
+@@ -129,6 +129,19 @@ layer-rule {
+ }
+ ```
+ 
++<sup>Since: next release</sup>
++
++Like for windows, you can set `kind="transparent"` to not draw the surface at all instead of a black rectangle, so the screencast shows whatever is underneath.
++
++```kdl
++// Make mako notifications invisible on screencasts.
++layer-rule {
++    match namespace="^notifications$"
++
++    block-out-from "screencast" kind="transparent"
++}
++```
++
+ #### `opacity`
+ 
+ Set the opacity of the surface.
+diff --git a/docs/wiki/Configuration:-Window-Rules.md b/docs/wiki/Configuration:-Window-Rules.md
+index 0d7e820f..85a63f5c 100644
+--- a/docs/wiki/Configuration:-Window-Rules.md
++++ b/docs/wiki/Configuration:-Window-Rules.md
+@@ -577,6 +577,24 @@ window-rule {
+ }
+ ```
+ 
++<sup>Since: next release</sup>
++
++By default, the window is replaced with a solid black rectangle (`kind="fill"`).
++Set `kind="transparent"` to not draw the window at all instead.
++The screencast will show whatever is underneath, as if the window wasn't there.
++The window's border, focus ring, shadow, pop-ups, and closing animation are hidden too.
++
++```kdl
++// Make password managers invisible on screencasts, rather than a black rectangle.
++window-rule {
++    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
++
++    block-out-from "screencast" kind="transparent"
++}
++```
++
++Keep in mind that the space the window occupies is not filled in: viewers will see the wallpaper or other windows there, so it can be apparent that something is missing in a tiled layout.
++
+ > [!WARNING]
+ > Be careful when blocking out windows based on a dynamically changing window title.
+ >
+diff --git a/niri-config/src/appearance.rs b/niri-config/src/appearance.rs
+index a1c83271..31ccd846 100644
+--- a/niri-config/src/appearance.rs
++++ b/niri-config/src/appearance.rs
+@@ -622,6 +622,23 @@ pub enum BlockOutFrom {
+     ScreenCapture,
+ }
+ 
++#[derive(knuffel::DecodeScalar, Debug, Default, Clone, Copy, PartialEq, Eq)]
++pub enum BlockOutKind {
++    /// Replace the content with a solid color.
++    #[default]
++    Fill,
++    /// Don't draw the content at all, showing whatever is underneath.
++    Transparent,
++}
++
++#[derive(knuffel::Decode, Debug, Clone, Copy, PartialEq, Eq)]
++pub struct BlockOutRule {
++    #[knuffel(argument)]
++    pub from: BlockOutFrom,
++    #[knuffel(property, default)]
++    pub kind: BlockOutKind,
++}
++
+ #[derive(knuffel::Decode, Debug, Default, Clone, Copy, PartialEq)]
+ pub struct BorderRule {
+     #[knuffel(child)]
+diff --git a/niri-config/src/layer_rule.rs b/niri-config/src/layer_rule.rs
+index cf099b3a..e01cbceb 100644
+--- a/niri-config/src/layer_rule.rs
++++ b/niri-config/src/layer_rule.rs
+@@ -1,4 +1,4 @@
+-use crate::appearance::{BackgroundEffectRule, BlockOutFrom, CornerRadius, ShadowRule};
++use crate::appearance::{BackgroundEffectRule, BlockOutRule, CornerRadius, ShadowRule};
+ use crate::utils::RegexEq;
+ use crate::window_rule::PopupsRule;
+ 
+@@ -11,8 +11,8 @@ pub struct LayerRule {
+ 
+     #[knuffel(child, unwrap(argument))]
+     pub opacity: Option<f32>,
+-    #[knuffel(child, unwrap(argument))]
+-    pub block_out_from: Option<BlockOutFrom>,
++    #[knuffel(child)]
++    pub block_out_from: Option<BlockOutRule>,
+     #[knuffel(child, default)]
+     pub shadow: ShadowRule,
+     #[knuffel(child)]
+diff --git a/niri-config/src/lib.rs b/niri-config/src/lib.rs
+index b8989e8d..3f4376db 100644
+--- a/niri-config/src/lib.rs
++++ b/niri-config/src/lib.rs
+@@ -671,6 +671,47 @@ mod tests {
+         );
+     }
+ 
++    #[test]
++    fn parse_block_out_kind() {
++        let parsed = do_parse(
++            r#"
++            window-rule { block-out-from "screencast"; }
++            window-rule { block-out-from "screen-capture" kind="fill"; }
++            window-rule { block-out-from "screen-capture" kind="transparent"; }
++            layer-rule { block-out-from "screencast" kind="transparent"; }
++            "#,
++        );
++
++        assert_eq!(
++            parsed
++                .window_rules
++                .iter()
++                .map(|rule| rule.block_out_from)
++                .collect::<Vec<_>>(),
++            vec![
++                Some(BlockOutRule {
++                    from: BlockOutFrom::Screencast,
++                    kind: BlockOutKind::Fill,
++                }),
++                Some(BlockOutRule {
++                    from: BlockOutFrom::ScreenCapture,
++                    kind: BlockOutKind::Fill,
++                }),
++                Some(BlockOutRule {
++                    from: BlockOutFrom::ScreenCapture,
++                    kind: BlockOutKind::Transparent,
++                }),
++            ]
++        );
++        assert_eq!(
++            parsed.layer_rules[0].block_out_from,
++            Some(BlockOutRule {
++                from: BlockOutFrom::Screencast,
++                kind: BlockOutKind::Transparent,
++            })
++        );
++    }
++
+     #[test]
+     fn parse() {
+         let parsed = do_parse(
+@@ -1961,7 +2002,10 @@ mod tests {
+                     excludes: [],
+                     opacity: None,
+                     block_out_from: Some(
+-                        Screencast,
++                        BlockOutRule {
++                            from: Screencast,
++                            kind: Fill,
++                        },
+                     ),
+                     shadow: ShadowRule {
+                         off: false,
+diff --git a/niri-config/src/window_rule.rs b/niri-config/src/window_rule.rs
+index b3543f92..1458f72a 100644
+--- a/niri-config/src/window_rule.rs
++++ b/niri-config/src/window_rule.rs
+@@ -2,7 +2,7 @@ use knuffel::errors::DecodeError;
+ use niri_ipc::ColumnDisplay;
+ 
+ use crate::appearance::{
+-    BackgroundEffect, BackgroundEffectRule, BlockOutFrom, BorderRule, CornerRadius, ShadowRule,
++    BackgroundEffect, BackgroundEffectRule, BlockOutRule, BorderRule, CornerRadius, ShadowRule,
+     TabIndicatorRule,
+ };
+ use crate::layout::DefaultPresetSize;
+@@ -66,8 +66,8 @@ pub struct WindowRule {
+     pub clip_to_geometry: Option<bool>,
+     #[knuffel(child, unwrap(argument))]
+     pub baba_is_float: Option<bool>,
+-    #[knuffel(child, unwrap(argument))]
+-    pub block_out_from: Option<BlockOutFrom>,
++    #[knuffel(child)]
++    pub block_out_from: Option<BlockOutRule>,
+     #[knuffel(child, unwrap(argument))]
+     pub variable_refresh_rate: Option<VrrRule>,
+     #[knuffel(child, unwrap(argument, str))]
+diff --git a/src/layer/mapped.rs b/src/layer/mapped.rs
+index 3f7eb189..43d9a50d 100644
+--- a/src/layer/mapped.rs
++++ b/src/layer/mapped.rs
+@@ -192,6 +192,10 @@ impl MappedLayer {
+         xray_pos: XrayPos,
+         push: &mut dyn FnMut(LayerSurfaceRenderElement<R>),
+     ) {
++        if ctx.target.should_hide(self.rules.block_out_from) {
++            return;
++        }
++
+         let scale = Scale::from(self.scale);
+         let alpha = self.rules.opacity.unwrap_or(1.).clamp(0., 1.);
+ 
+@@ -263,7 +267,9 @@ impl MappedLayer {
+         xray_pos: XrayPos,
+         push: &mut dyn FnMut(LayerSurfaceRenderElement<R>),
+     ) {
+-        if ctx.target.should_block_out(self.rules.block_out_from) {
++        if ctx.target.should_hide(self.rules.block_out_from)
++            || ctx.target.should_block_out(self.rules.block_out_from)
++        {
+             return;
+         }
+ 
+diff --git a/src/layer/mod.rs b/src/layer/mod.rs
+index 767a6b0e..72fa9dc6 100644
+--- a/src/layer/mod.rs
++++ b/src/layer/mod.rs
+@@ -1,6 +1,6 @@
+ use niri_config::layer_rule::{LayerRule, Match};
+ use niri_config::utils::MergeWith as _;
+-use niri_config::{BackgroundEffect, BlockOutFrom, CornerRadius, ResolvedPopupsRules, ShadowRule};
++use niri_config::{BackgroundEffect, BlockOutRule, CornerRadius, ResolvedPopupsRules, ShadowRule};
+ use smithay::desktop::LayerSurface;
+ use smithay::wayland::shell::wlr_layer::Layer;
+ 
+@@ -14,7 +14,7 @@ pub struct ResolvedLayerRules {
+     pub opacity: Option<f32>,
+ 
+     /// Whether to block out this layer surface from certain render targets.
+-    pub block_out_from: Option<BlockOutFrom>,
++    pub block_out_from: Option<BlockOutRule>,
+ 
+     /// Shadow overrides.
+     pub shadow: ShadowRule,
+diff --git a/src/layout/closing_window.rs b/src/layout/closing_window.rs
+index ca28f598..1d6d793f 100644
+--- a/src/layout/closing_window.rs
++++ b/src/layout/closing_window.rs
+@@ -3,7 +3,7 @@ use std::rc::Rc;
+ 
+ use anyhow::Context as _;
+ use glam::{Mat3, Vec2};
+-use niri_config::BlockOutFrom;
++use niri_config::BlockOutRule;
+ use smithay::backend::allocator::Fourcc;
+ use smithay::backend::renderer::element::utils::{
+     Relocate, RelocateRenderElement, RescaleRenderElement,
+@@ -39,7 +39,7 @@ pub struct ClosingWindow {
+     blocked_out_buffer: TextureBuffer<GlesTexture>,
+ 
+     /// Where the window should be blocked out from.
+-    block_out_from: Option<BlockOutFrom>,
++    block_out_from: Option<BlockOutRule>,
+ 
+     /// Size of the window geometry.
+     geo_size: Size<f64, Logical>,
+@@ -139,8 +139,15 @@ impl ClosingWindow {
+                 (None, Point::default())
+             };
+         let (blocked_out_buffer, blocked_out_buffer_offset) =
+-            render_to_texture(snapshot.blocked_out_contents)
+-                .context("error rendering blocked-out contents")?;
++            if snapshot.blocked_out_contents.is_empty() {
++                // Content hidden from the Screencast target renders nothing there. Such closing
++                // windows are skipped for the targets they're hidden from, so this buffer is
++                // never drawn.
++                (buffer.clone(), buffer_offset)
++            } else {
++                render_to_texture(snapshot.blocked_out_contents)
++                    .context("error rendering blocked-out contents")?
++            };
+ 
+         Ok(Self {
+             buffer,
+@@ -176,6 +183,10 @@ impl ClosingWindow {
+         }
+     }
+ 
++    pub fn should_hide(&self, target: RenderTarget) -> bool {
++        target.should_hide(self.block_out_from)
++    }
++
+     pub fn render(
+         &self,
+         ctx: RenderCtx<GlesRenderer>,
+diff --git a/src/layout/floating.rs b/src/layout/floating.rs
+index 5fe1d29a..5fa6de0c 100644
+--- a/src/layout/floating.rs
++++ b/src/layout/floating.rs
+@@ -1081,6 +1081,10 @@ impl<W: LayoutElement> FloatingSpace<W> {
+         // FIXME: I guess this should rather preserve the stacking order when the window is closed.
+         if layer.is_normal() {
+             for closing in self.closing_windows.iter().rev() {
++                if closing.should_hide(ctx.target) {
++                    continue;
++                }
++
+                 let elem = closing.render(ctx.as_gles(), view_rect, scale);
+                 push(elem.into());
+             }
+diff --git a/src/layout/scrolling.rs b/src/layout/scrolling.rs
+index 4f462c65..fd5a12f5 100644
+--- a/src/layout/scrolling.rs
++++ b/src/layout/scrolling.rs
+@@ -2975,6 +2975,10 @@ impl<W: LayoutElement> ScrollingSpace<W> {
+         if layer.is_normal() {
+             let view_rect = Rectangle::new(Point::from((self.view_pos(), 0.)), self.view_size);
+             for closing in self.closing_windows.iter().rev() {
++                if closing.should_hide(ctx.target) {
++                    continue;
++                }
++
+                 let elem = closing.render(ctx.as_gles(), view_rect, scale);
+                 push(elem.into());
+             }
+diff --git a/src/layout/tile.rs b/src/layout/tile.rs
+index 7e9b653f..3c1f9c44 100644
+--- a/src/layout/tile.rs
++++ b/src/layout/tile.rs
+@@ -1376,6 +1376,11 @@ impl<W: LayoutElement> Tile<W> {
+         let mut pushed = false;
+         self.window().set_offscreen_data(None);
+ 
++        // Draw nothing for tiles hidden from this target, including border, shadow and animations.
++        if ctx.target.should_hide(self.window.rules().block_out_from) {
++            return;
++        }
++
+         if let Some(open) = &self.open_animation {
+             let mut ctx = ctx.as_gles();
+             let mut elements = Vec::new();
+diff --git a/src/render_helpers/mod.rs b/src/render_helpers/mod.rs
+index 3ae027c8..ea52eba5 100644
+--- a/src/render_helpers/mod.rs
++++ b/src/render_helpers/mod.rs
+@@ -1,7 +1,7 @@
+ use std::ptr;
+ 
+ use anyhow::{bail, ensure, Context as _};
+-use niri_config::BlockOutFrom;
++use niri_config::{BlockOutFrom, BlockOutKind, BlockOutRule};
+ use smithay::backend::allocator::dmabuf::Dmabuf;
+ use smithay::backend::allocator::{Buffer, Fourcc};
+ use smithay::backend::renderer::damage::OutputDamageTracker;
+@@ -117,13 +117,25 @@ pub trait ToRenderElement {
+ impl RenderTarget {
+     pub const COUNT: usize = 3;
+ 
+-    pub fn should_block_out(self, block_out_from: Option<BlockOutFrom>) -> bool {
+-        match block_out_from {
+-            None => false,
+-            Some(BlockOutFrom::Screencast) => self == RenderTarget::Screencast,
+-            Some(BlockOutFrom::ScreenCapture) => self != RenderTarget::Output,
++    fn is_blocked_from(self, from: BlockOutFrom) -> bool {
++        match from {
++            BlockOutFrom::Screencast => self == RenderTarget::Screencast,
++            BlockOutFrom::ScreenCapture => self != RenderTarget::Output,
+         }
+     }
++
++    /// Returns whether the content should be replaced with a solid color on this target.
++    pub fn should_block_out(self, block_out: Option<BlockOutRule>) -> bool {
++        block_out
++            .is_some_and(|rule| rule.kind == BlockOutKind::Fill && self.is_blocked_from(rule.from))
++    }
++
++    /// Returns whether the content should not be drawn at all on this target.
++    pub fn should_hide(self, block_out: Option<BlockOutRule>) -> bool {
++        block_out.is_some_and(|rule| {
++            rule.kind == BlockOutKind::Transparent && self.is_blocked_from(rule.from)
++        })
++    }
+ }
+ 
+ impl ToRenderElement for BakedBuffer<TextureBuffer<GlesTexture>> {
+diff --git a/src/render_helpers/snapshot.rs b/src/render_helpers/snapshot.rs
+index d0e24fea..f64671fa 100644
+--- a/src/render_helpers/snapshot.rs
++++ b/src/render_helpers/snapshot.rs
+@@ -1,6 +1,6 @@
+ use std::cell::OnceCell;
+ 
+-use niri_config::BlockOutFrom;
++use niri_config::BlockOutRule;
+ use smithay::backend::allocator::Fourcc;
+ use smithay::backend::renderer::element::{Kind, RenderElement};
+ use smithay::backend::renderer::gles::{GlesRenderer, GlesTexture};
+@@ -29,7 +29,7 @@ pub struct RenderSnapshot<C, B> {
+     pub blocked_out_contents: Vec<B>,
+ 
+     /// Where the contents were blocked out from at the time of the snapshot.
+-    pub block_out_from: Option<BlockOutFrom>,
++    pub block_out_from: Option<BlockOutRule>,
+ 
+     /// Visual size of the element at the point of the snapshot.
+     pub size: Size<f64, Logical>,
+diff --git a/src/ui/mru.rs b/src/ui/mru.rs
+index d8ec6de1..0f09a1ca 100644
+--- a/src/ui/mru.rs
++++ b/src/ui/mru.rs
+@@ -349,6 +349,10 @@ impl Thumbnail {
+     ) {
+         let _span = tracy_client::span!("Thumbnail::render");
+ 
++        if ctx.target.should_hide(mapped.rules().block_out_from) {
++            return;
++        }
++
+         let round = move |logical: f64| round_logical_in_physical(scale, logical);
+         let padding = round(config.highlight.padding);
+         let title_gap = round(TITLE_GAP);
+diff --git a/src/window/mapped.rs b/src/window/mapped.rs
+index 785e4081..b90dcd83 100644
+--- a/src/window/mapped.rs
++++ b/src/window/mapped.rs
+@@ -651,6 +651,10 @@ impl LayoutElement for Mapped {
+         alpha: f32,
+         push: &mut dyn FnMut(LayoutElementRenderElement<R>),
+     ) {
++        if ctx.target.should_hide(self.rules.block_out_from) {
++            return;
++        }
++
+         if ctx.target.should_block_out(self.rules.block_out_from) {
+             let mut buffer = self.block_out_buffer.borrow_mut();
+             buffer.resize(self.window.geometry().size.to_f64());
+@@ -682,7 +686,9 @@ impl LayoutElement for Mapped {
+         xray_pos: XrayPos,
+         push: &mut dyn FnMut(LayoutElementRenderElement<R>),
+     ) {
+-        if ctx.target.should_block_out(self.rules.block_out_from) {
++        if ctx.target.should_hide(self.rules.block_out_from)
++            || ctx.target.should_block_out(self.rules.block_out_from)
++        {
+             return;
+         }
+ 
+diff --git a/src/window/mod.rs b/src/window/mod.rs
+index c6a24b1d..4512e983 100644
+--- a/src/window/mod.rs
++++ b/src/window/mod.rs
+@@ -3,7 +3,7 @@ use std::cmp::{max, min};
+ use niri_config::utils::MergeWith as _;
+ use niri_config::window_rule::{Match, OnXdgActivate, VrrRule, WindowRule};
+ use niri_config::{
+-    BackgroundEffect, BlockOutFrom, BorderRule, CornerRadius, FloatingPosition, PresetSize,
++    BackgroundEffect, BlockOutRule, BorderRule, CornerRadius, FloatingPosition, PresetSize,
+     ResolvedPopupsRules, ShadowRule, TabIndicatorRule,
+ };
+ use niri_ipc::ColumnDisplay;
+@@ -112,7 +112,7 @@ pub struct ResolvedWindowRules {
+     pub baba_is_float: Option<bool>,
+ 
+     /// Whether to block out this window from certain render targets.
+-    pub block_out_from: Option<BlockOutFrom>,
++    pub block_out_from: Option<BlockOutRule>,
+ 
+     /// Whether to enable VRR on this window's primary output if it is on-demand.
+     pub variable_refresh_rate: Option<VrrRule>,

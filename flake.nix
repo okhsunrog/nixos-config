@@ -50,6 +50,10 @@
       url = "github:okhsunrog/rio/nixos-main-with-fixes";
       flake = false;
     };
+    niri-upstream = {
+      url = "github:niri-wm/niri/fcbc971cf49a987b1e8d5ff1d64da6b1f61a1787";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     # Temporary power-loss diagnostic build. This immutable source is retained
     # by the installed EFI plan; restore the GitHub input after the investigation.
     zbm-rs.url = "path:/nix/store/5pfgpy7171dxqli5vzl011mbz362b9ya-source";
@@ -88,6 +92,7 @@
     {
       self,
       rio-src,
+      niri-upstream,
       home-manager,
       dux-shell,
       dux-greeter,
@@ -119,6 +124,7 @@
         inherit system;
         specialArgs = {
           rio = self.packages.${system}.rio;
+          niriPatched = self.packages.${system}.niri;
           inherit
             home-manager
             dux-shell
@@ -150,6 +156,7 @@
       };
       formatter.${system} = pkgs.nixfmt-tree;
       packages.${system} = (import ./packages/corporate.nix { inherit pkgs; }) // {
+        niri = import ./packages/niri.nix { inherit niri-upstream system; };
         dux-suite = pkgs.symlinkJoin {
           name = "dux-suite-2.0.0";
           paths = [
@@ -172,10 +179,15 @@
         inherit (pkgs) age sops;
       };
       checks.${system} = {
+        niri-capture-config = import ./tests/niri-capture-config.nix {
+          inherit pkgs;
+          niri = self.packages.${system}.niri;
+        };
         private-inputs = import ./tests/private-inputs.nix { inherit pkgs; };
         environments = import ./tests/environments.nix {
           inherit pkgs;
           framework = self.nixosConfigurations.framework;
+          niriPackage = self.packages.${system}.niri;
         };
         environments-vm = import ./tests/environments-vm.nix {
           inherit

@@ -160,6 +160,37 @@ so no local CA blacklist is needed. The system CA bundle explicitly distrusts
 and `emSign ECC Root CA - C3`.
 Applications with embedded trust stores still require their own security updates.
 
+## Personal Niri build
+
+The Niri environment uses `packages/niri.nix`, based on upstream commit
+`fcbc971cf49a987b1e8d5ff1d64da6b1f61a1787` through the `niri-upstream` flake input.
+The patch series in `patches/niri/` is applied in this order:
+
+- `transparent-screen-capture.patch`: [upstream PR #4723](https://github.com/niri-wm/niri/pull/4723),
+  adding `block-out-from "screen-capture" kind="transparent"` for window and layer rules.
+- `hide-private-resize-snapshots.patch`: prevent a previously hidden snapshot from
+  appearing during resize after the current window rule changes.
+- `hide-private-tab-indicators.patch`: omit hidden windows' tab indicators from
+  capture, preserving the layout and the normal on-screen indicators.
+
+For a layer-shell application, choose a stable namespace in the application and
+add a matching `layer-rule` to the user's Niri configuration:
+
+```kdl
+layer-rule {
+    match namespace="^my-private-overlay$"
+    block-out-from "screen-capture" kind="transparent"
+}
+```
+
+No Dux or IPC modifications are included. The example is not enabled automatically.
+To update upstream, change the revision in `inputs.niri-upstream.url`, run
+`nix flake update niri-upstream`, resolve any patch conflicts, and run
+`nix build .#niri .#checks.x86_64-linux.niri-capture-config .#checks.x86_64-linux.environments`.
+The input intentionally pins a commit; updating the lock alone does not advance it.
+Verify the actual application's screenshots and screencasts before relying on
+the new build. Building does not activate or restart the desktop session.
+
 ## Personal Rio build
 
 Rio is built from [`okhsunrog/rio:nixos-main-with-fixes`](https://github.com/okhsunrog/rio/tree/nixos-main-with-fixes),

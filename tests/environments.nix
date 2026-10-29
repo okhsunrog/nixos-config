@@ -1,4 +1,8 @@
-{ pkgs, framework }:
+{
+  pkgs,
+  framework,
+  niriPackage,
+}:
 let
   lib = pkgs.lib;
   evaluated = import "${pkgs.path}/nixos/lib/eval-config.nix" {
@@ -69,6 +73,7 @@ let
 in
 assert preview.services.desktopManager.plasma6.enable;
 assert niri.programs.niri.enable;
+assert niri.programs.niri.package.outPath == niriPackage.outPath;
 assert !niri.services.desktopManager.plasma6.enable;
 assert !niri.services.displayManager.plasma-login-manager.enable;
 assert !niri.framework.plasmaLoginAuth.enable;

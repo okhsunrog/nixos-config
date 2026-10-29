@@ -1,0 +1,46 @@
+diff --git a/src/layout/scrolling.rs b/src/layout/scrolling.rs
+index fd5a12f5..1e7565e4 100644
+--- a/src/layout/scrolling.rs
++++ b/src/layout/scrolling.rs
+@@ -3001,8 +3001,15 @@ impl<W: LayoutElement> ScrollingSpace<W> {
+             // Draw the tab indicator on top.
+             {
+                 let pos = col_pos.to_physical_precise_round(scale).to_logical(scale);
+-                col.tab_indicator
+-                    .render(ctx.renderer, pos, &mut |elem| push(elem.into()));
++                col.tab_indicator.render(
++                    ctx.renderer,
++                    pos,
++                    |idx| {
++                        !ctx.target
++                            .should_hide(col.tiles[idx].window().rules().block_out_from)
++                    },
++                    &mut |elem| push(elem.into()),
++                );
+             }
+ 
+             for (tile, tile_off, visible) in col.tiles_in_render_order() {
+diff --git a/src/layout/tab_indicator.rs b/src/layout/tab_indicator.rs
+index e7d9a3df..067a75c0 100644
+--- a/src/layout/tab_indicator.rs
++++ b/src/layout/tab_indicator.rs
+@@ -294,6 +294,7 @@ impl TabIndicator {
+         &self,
+         renderer: &mut impl NiriRenderer,
+         pos: Point<f64, Logical>,
++        is_visible: impl Fn(usize) -> bool,
+         push: &mut dyn FnMut(TabIndicatorRenderElement),
+     ) {
+         let has_border_shader = BorderRenderElement::has_shader(renderer);
+@@ -301,7 +302,10 @@ impl TabIndicator {
+             return;
+         }
+ 
+-        for (shader, loc) in zip(&self.shaders, &self.shader_locs) {
++        for (idx, (shader, loc)) in zip(&self.shaders, &self.shader_locs).enumerate() {
++            if !is_visible(idx) {
++                continue;
++            }
+             let elem = shader.clone().with_location(pos + *loc);
+             push(TabIndicatorRenderElement::from(elem));
+         }

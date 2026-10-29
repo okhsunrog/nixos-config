@@ -1,0 +1,17 @@
+diff --git a/src/render_helpers/snapshot.rs b/src/render_helpers/snapshot.rs
+index f64671fa..4e0aa67e 100644
+--- a/src/render_helpers/snapshot.rs
++++ b/src/render_helpers/snapshot.rs
+@@ -56,6 +56,12 @@ where
+         ctx: RenderCtx<GlesRenderer>,
+         scale: Scale<f64>,
+     ) -> Option<&(GlesTexture, Rectangle<i32, Physical>)> {
++        // Rules may have changed since this snapshot was captured. Never expose a
++        // previously hidden frame through an animation of a now-visible window.
++        if ctx.target.should_hide(self.block_out_from) {
++            return None;
++        }
++
+         if ctx.target.should_block_out(self.block_out_from) {
+             self.blocked_out_texture.get_or_init(|| {
+                 let _span = tracy_client::span!("RenderSnapshot::texture");

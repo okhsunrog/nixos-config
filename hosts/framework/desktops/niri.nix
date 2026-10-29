@@ -4,6 +4,7 @@
   pkgs,
   dux-greeter,
   dux-files,
+  niriPatched,
   ...
 }:
 {
@@ -12,6 +13,7 @@
     dux-files.nixosModules.default
   ];
   programs.niri.enable = true;
+  programs.niri.package = niriPatched;
   programs.niri.useNautilus = false;
   programs.xwayland.enable = true;
   services.displayManager.defaultSession = "niri";
