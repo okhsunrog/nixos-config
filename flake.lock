@@ -515,7 +515,7 @@
       "flake": false,
       "locked": {
         "lastModified": 1,
-        "narHash": "sha256-dBLMPuiJryIfpeujlFvyU9nvQbge/zR8xvPjn5tyqeg=",
+        "narHash": "sha256-JjlKmMOc6wTjKRdtwzEWL6vuE8DCkwKNObTKBf6C39Q=",
         "path": "/var/lib/zbm-rs-public/framework-modules",
         "type": "path"
       },
@@ -605,17 +605,14 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1792776355,
-        "narHash": "sha256-TG/qAOcgWyjOjOK9Y//ST3NoPOpdBrlhrZ9dOSVaTTI=",
-        "owner": "okhsunrog",
-        "repo": "zbm-rs",
-        "rev": "e6402dee79b129dec08d3e74b02cbc3a43d93c13",
-        "type": "github"
+        "lastModified": 0,
+        "narHash": "sha256-gJCWL9l51StJAcX0AbBOWZJQrGlzTYSpmfcACGwNZD4=",
+        "path": "/nix/store/hk5nwbb1vb57r0v2s9rwabxa0icqkpbg-source",
+        "type": "path"
       },
       "original": {
-        "owner": "okhsunrog",
-        "repo": "zbm-rs",
-        "type": "github"
+        "path": "/nix/store/hk5nwbb1vb57r0v2s9rwabxa0icqkpbg-source",
+        "type": "path"
       }
     },
     "zen-browser": {

@@ -41,6 +41,17 @@ let
     profile = "host-only";
     hardwareManifest = hardware;
     hostId = config.networking.hostId;
+    # Retain symbols/line tables and read-only power/temperature telemetry while
+    # investigating intermittent power loss during the passphrase prompt.
+    rustProfile = {
+      debug = 1;
+      strip = "none";
+    };
+    extraModules = [
+      "coretemp"
+      "battery"
+      "ac"
+    ];
     targetAuthorities = [ certificate ];
     extraModulePackages = kernelPackages: [
       (import "${zbm-rs}/nix/insyde-efivarfs.nix" {
@@ -52,6 +63,11 @@ let
     moduleOptions.insyde_efivarfs = "expose=1";
     loaderConfig = {
       boot.mode = "menu";
+      diagnostics = {
+        esp_partuuid = esp;
+        continuous = true;
+      };
+      ui.title = "zbm-rs diagnostic";
       ui.show_snapshots = true;
       zfs.import_policy = "host-id";
       security = {

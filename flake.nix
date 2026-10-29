@@ -50,7 +50,9 @@
       url = "github:okhsunrog/rio/nixos-main-with-fixes";
       flake = false;
     };
-    zbm-rs.url = "github:okhsunrog/zbm-rs";
+    # Temporary power-loss diagnostic build. This immutable source is retained
+    # by the installed EFI plan; restore the GitHub input after the investigation.
+    zbm-rs.url = "path:/nix/store/hk5nwbb1vb57r0v2s9rwabxa0icqkpbg-source";
     zbm-rescue.url = "github:okhsunrog/zbm-rs/4038ff09a44c674fc1b4b1126b0f21aa4d09706a";
     signed-modules = {
       url = "path:/var/lib/zbm-rs-public/framework-modules";

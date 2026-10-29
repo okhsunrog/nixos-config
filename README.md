@@ -283,6 +283,14 @@ operation outside derivations, not an unsigned fallback.
 
 The OS retains native systemd TPM/SRK/NvPCR services and receives the installed
 loader's signed PCR policy/public key through its runtime-secret appender.
+During the intermittent boot power-loss investigation, the loader input is
+pinned to a local immutable source snapshot and the menu says `zbm-rs diagnostic`.
+The explicit ESP stores `EFI/zbm-rs/diagnostics/boot-*/` with bounded kernel,
+lifecycle and health logs (eight boots, about 32 MiB total, 250 ms sync interval).
+Password input and search text are excluded. The previous signed loader remains
+available as `zbm-rs (before diagnostics)` in the firmware boot menu.
+After the investigation, restore the `github:okhsunrog/zbm-rs` input and remove
+the temporary diagnostics, debug-symbol and sensor settings from `efi.nix`.
 Updating the EFI image requires refreshing this policy before preparing the next
 OS generation. EFI construction and signing happen in the preparation step;
 generation installation consumes that prepared signed file. Neither step resets
