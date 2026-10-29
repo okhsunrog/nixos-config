@@ -55,6 +55,21 @@ session still require testing after booting NixOS. The Arch BE remains available
 
 ## Removed Arch-specific user integration
 
+### Wi-Fi interface name
+
+The built-in Intel Wi-Fi adapter keeps the name `wlan0` through
+`10-framework-wifi.link`, matched by its permanent MAC address. This preserves
+the interface bindings in the imported NetworkManager profiles. Other adapters
+retain the default naming policy. The link rule applies when the device is
+initialized, so deploy with `framework-rebuild boot` and reboot rather than
+renaming the connected interface in the running session.
+
+Profiles created on NixOS with a `wlp170s0` binding have that binding cleared,
+allowing them to work before and after the rename. UUIDs and stored credentials
+are preserved. Existing duplicate profiles are retained.
+
+### User applications
+
 The cloned home now uses `/run/current-system/sw/bin` for GitHub's credential
 helper, Nextcloud autostart, Konsole's Bash profiles and existing user units
 (SSH agent, JobAI tunnel and Realty Aggregator). Konsole's theme scripts use

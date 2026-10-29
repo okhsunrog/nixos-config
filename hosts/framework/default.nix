@@ -29,6 +29,14 @@
   networking.hostName = "nova-nixos";
   networking.hostId = "00bab10c";
   networking.networkmanager.enable = true;
+  # Keep Arch's Wi-Fi profile bindings valid for this built-in adapter.
+  systemd.network.links."10-framework-wifi" = {
+    matchConfig.PermanentMACAddress = "8c:f8:c5:74:b2:56";
+    linkConfig = {
+      NamePolicy = "";
+      Name = "wlan0";
+    };
+  };
   time.timeZone = "Europe/Moscow";
   i18n.defaultLocale = "en_US.UTF-8";
   # Plasma's migrated per-user format settings use British English.
