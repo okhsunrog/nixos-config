@@ -3,6 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # WebKitGTK animation-completion fix, pending nixpkgs PR #578459.
+    nixpkgs-webkit.url = "github:NixOS/nixpkgs/512527cdaf7eab2f9e4c5e6e3935c1648d156621";
     nixos-hardware = {
       url = "github:NixOS/nixos-hardware";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -101,6 +103,7 @@
       dux-calendar,
       dux-files,
       nixpkgs,
+      nixpkgs-webkit,
       nixos-hardware,
       sops-nix,
       host-secrets,
@@ -123,6 +126,7 @@
       nixosConfigurations.framework = nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = {
+          inherit nixpkgs-webkit;
           rio = self.packages.${system}.rio;
           niriPatched = self.packages.${system}.niri;
           inherit

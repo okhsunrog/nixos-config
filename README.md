@@ -340,3 +340,16 @@ pool used by the running Arch system.
 
 The [Arch home migration notes](docs/arch-home-migration.md) describe the
 independent home clone, shared datasets, Zen profile and imported Floppa state.
+
+## WebKitGTK animation fix
+
+`hosts/framework/webkit.nix` temporarily supplies `webkitgtk_4_1` from the pinned
+`nixpkgs-webkit` input (Nixpkgs PR #578459, WebKitGTK 2.54.2). This fixes a Skia
+animation-completion flash reproduced in Floppa on Niri (WebKit bug #321993).
+The overlay applies to consumers of the system package set, including Floppa;
+applications with separately pinned runtimes, such as a local Tangleaf build,
+need their own runtime update. GTK 4's `webkitgtk_6_0` is not overridden.
+
+The 2.54.2 build passed 100 Floppa menu cycles with original CSS animations and
+Skia enabled; the minimal example reproduced flashes on 2.54.1 but not 2.54.2.
+Remove the additional input and module once the primary nixpkgs provides the fix.

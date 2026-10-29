@@ -17,6 +17,7 @@
     ./power.nix
     ./secrets.nix
     ./corporate.nix
+    ./webkit.nix
     ./floppa.nix
     ../../modules/novpn
   ];
