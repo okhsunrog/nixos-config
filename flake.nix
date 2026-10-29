@@ -58,7 +58,7 @@
     };
     # Temporary power-loss diagnostic build. This immutable source is retained
     # by the installed EFI plan; restore the GitHub input after the investigation.
-    zbm-rs.url = "path:/nix/store/5pfgpy7171dxqli5vzl011mbz362b9ya-source";
+    zbm-rs.url = "path:/nix/store/d5hj1adpbkslf5rvw1mxkjjcx83ycfyw-source";
     zbm-rescue.url = "github:okhsunrog/zbm-rs/4038ff09a44c674fc1b4b1126b0f21aa4d09706a";
     signed-modules = {
       url = "path:/var/lib/zbm-rs-public/framework-modules";
