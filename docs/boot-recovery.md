@@ -33,10 +33,9 @@ The authoritative generic design lives in zbm-rs
   `kexec_file_load`, and the TPM NV/provenance protection required by the selected
   Garrett backport.
 - Target NixOS: integrity Lockdown, authenticated RAM images in LUKS2 swap, early
-  resume before any ZFS import. Sharing the protected kernelPackages with the
-  main loader is the current proposal under discussion; mandatory compile-time
-  disabling of outgoing kexec is being reconsidered against the local-key trust
-  model, not implemented as a requirement.
+  resume before any ZFS import. Share the protected `kernelPackages` with the
+  main loader, keeping kexec compiled in. Separate loader/target kernel builds
+  and compile-time exclusion of target kexec are not requirements.
 - Rescue: separate unsigned EFI boot, no hibernation/resume, no protected TPM
   capability advertisement, but the same swap detection and verified cancellation
   before booting an OS, exposing an unrestricted shell or mutating pools.
@@ -53,12 +52,22 @@ are incomplete. Do not enable this policy in the host configuration until those
 gates and physical testing have passed. Keep Secure Boot and Lockdown enabled.
 
 Full root currently has access to boot/IMA signing keys in `/var/lib/secureboot`.
-The shared-kernel proposal accepts that such a compromise is already beyond the
+The shared-kernel baseline accepts that such a compromise is already beyond the
 trusted-boot boundary. No concrete configured path with kexec authority but no
 signing-key access was identified in this review. The main loader's signed
 profile cannot constrain later kexec calls from NixOS. Compile-time exclusion or
 an early target-only kexec-load disable policy remain optional hardening, to be
 revisited if key isolation or the threat model changes. Neither is applied here.
+The cheap early sysctl is currently being considered separately; it does not
+require another kernel build and must not disable kexec in loader or rescue.
+
+After the complete hibernation path works and has passed acceptance, remove old
+system generations and their stale prepared artifacts through the standard
+pruning workflow. Retaining old kernels is not part of this deployment plan.
+Intentional kexec through old kernels and research into their possible TPM
+provenance bypass are outside scope. VM acceptance still covers the supported
+patched-loader-to-patched-target path, authenticated RAM restoration and rejection
+of corrupted images or invalid/unavailable TPM evidence.
 
 ## Planned rescue lifecycle
 

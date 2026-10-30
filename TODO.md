@@ -16,8 +16,12 @@
   hibernation under Lockdown. An opt-in Linux 7.2.9 port of Matthew Garrett's
   17-patch TPM-signature RFC is being built and tested in zbm-rs; see
   `nix/patches/hibernation-tpm-7.2.9/README.md` there. Complete EFI/TPM and kexec
-  VM coverage, image-tampering rejection, enforced loader-policy integration
+  VM coverage for the shared patched loader/target kernel, image-tampering
+  rejection, enforced loader-policy integration
   and physical testing before updating the pinned loader/kernel inputs here.
+  Remove old generations and stale prepared artifacts after acceptance; intentional
+  old-kernel downgrade research is out of scope. See `docs/boot-recovery.md` for
+  the fixed architecture and remaining implementation work.
   Preserve resume-before-import ordering and explicit saved-session
   cancellation. Do not disable Lockdown or Secure Boot. The 48 GiB LUKS2 swap
   remains configured for ordinary paging; hibernation, hybrid sleep and
