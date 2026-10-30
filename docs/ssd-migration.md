@@ -85,3 +85,40 @@ current mounted system. Verify the disk by its stable identity at that step.
 The device supports discard; the current pool already has `autotrim=on`.
 Discard tells the controller that the old blocks are free; it does not reset
 flash wear or require a secure erase/sanitize operation.
+
+## NVMe partitioning completed, 2026-10-30
+
+The external pool scrub completed with zero errors. While booted entirely
+from `nova_external`, the Samsung NVMe was discarded in full
+(2,000,398,934,016 bytes) and repartitioned. The old NVMe pool and its data no
+longer exist; restoration must use the SSD snapshots and full NAS home backup.
+
+New layout:
+
+| Partition | Size | Format | Identifier |
+| --- | --- | --- | --- |
+| 1 | 2 GiB | FAT32, `NVME_EFI` | PARTUUID `aafa93cb-dbf2-483c-8ca2-cb035104f8b9` |
+| 2 | 48 GiB | LUKS2 containing swap | LUKS UUID `965b36af-dc40-4e5d-aa7b-49f49407c3ef` |
+| 3 | Remaining space | ZFS `novafs` | PARTUUID `a06f78d5-95f1-4140-9c5c-1867ca180d23` |
+
+The new pool GUID is `13099373940756918353`. It has one partition vdev,
+`ashift=12`, `autotrim=on`, `autoexpand=off`, and **`compatibility=off`**;
+no restriction to OpenZFS 2.3 was applied. NAS was observed running 2.3.2,
+so validate future replication streams for its supported features separately.
+
+Dataset defaults: `compression=zstd`, `recordsize=128K`, `atime=on`,
+`relatime=on`, `xattr=sa`, `acltype=posix`, `dnodesize=auto`, `devices=off`,
+`dedup=off`, `sync=standard`, `checksum=on`, `copies=1`, `overlay=off`.
+The pool root uses AES-256-GCM with the existing passphrase file. Restored
+raw datasets retain their original data keys and normalization properties;
+explicitly verify the inherited operational properties after receiving them.
+
+Swap was formatted with the existing `/etc/zfs/zroot.key`, tested successfully,
+and left closed/inactive. It is not yet integrated into the NVMe boot config.
+The NVMe ESP does not yet contain its new loader.
+
+Only the non-mountable parents `novafs/nixos0` and `novafs/nixos0/data` have
+been created. Create the final `root`, `data/home`, `nextcloud`, and
+`tmp_zfs_home` datasets by receiving their full streams into new targets;
+do not create empty placeholders requiring a forced overwrite. Pool import
+uses `cachefile=none` and a temporary altroot under the SSD staging directory.
