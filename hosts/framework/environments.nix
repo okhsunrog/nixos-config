@@ -1,4 +1,4 @@
-{ ... }:
+{ config, ... }:
 {
   imports = [ ../../modules/framework-environments ];
   framework.environments = {
@@ -26,13 +26,13 @@
     };
     entries = {
       kde = {
-        dataset = "novafs/nixos0/data/home";
+        dataset = config.framework.storage.homeDataset;
         backup = "mira";
       };
       niri = {
         # Ordinary application state is shared; only declared desktop exceptions differ.
         enable = true;
-        dataset = "novafs/nixos0/data/home";
+        dataset = config.framework.storage.homeDataset;
         backup = "mira";
       };
     };

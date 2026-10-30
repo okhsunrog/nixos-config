@@ -1,4 +1,5 @@
 """Prepare the owner's main EFI and OS PCR signatures; never install rescue here."""
+import argparse
 import fcntl
 import importlib.util
 import json
@@ -6,7 +7,6 @@ import os
 from pathlib import Path
 import struct
 import subprocess
-import sys
 import tempfile
 
 
@@ -75,7 +75,35 @@ def write_atomic(path, data):
         Path(temporary).unlink(missing_ok=True)
 
 
-def prepare(plan):
+def runtime_path(root, value):
+    path = Path(value)
+    if not path.is_absolute() or ".." in path.parts:
+        raise ValueError("Expected an absolute runtime path")
+    result = root / path.relative_to("/")
+    if not result.resolve().is_relative_to(root):
+        raise ValueError("Runtime path escapes the selected root")
+    return str(result)
+
+
+def plan_for_root(plan, root):
+    result = dict(plan)
+    for key in ("deployment", "pcrKey", "pcrPublicKey", "pcrSignatures"):
+        result[key] = runtime_path(root, plan[key])
+    result["efi"] = dict(plan["efi"])
+    result["efi"]["certificate"] = runtime_path(root, plan["efi"]["certificate"])
+    return result
+
+
+def prepare(plan, root=Path("/")):
+    root = root.resolve(strict=True)
+    os.environ["PATH"] = plan["toolPath"]
+    if root != Path("/"):
+        if not (root / "etc/NIXOS").is_file() or not plan.get("rootDataset"):
+            raise ValueError("Expected an installed NixOS root and an explicit target dataset")
+        source = command(["findmnt", "-n", "-o", "SOURCE", "--mountpoint", root]).decode().strip()
+        if source != plan["rootDataset"]:
+            raise ValueError("Mounted signing root does not match the plan's dataset")
+        plan = plan_for_root(plan, root)
     installer = load_installer(plan["installer"])
     deployment = Path(plan["deployment"])
     image = deployment / "esp/EFI/BOOT/BOOTX64.EFI"
@@ -92,9 +120,9 @@ def prepare(plan):
             raise ValueError("Runtime EFI certificate differs from the image's pinned trust")
         if not deployment.exists():
             command(["uv", "run", "--offline", "--no-project", "python", plan["publisher"], plan["image"], deployment,
-                     "--efi-key", "/var/lib/secureboot/db.key", "--efi-cert", "/var/lib/secureboot/db.pem",
-                     "--ima-key", "/var/lib/secureboot/ima.key", "--ima-cert", "/var/lib/secureboot/ima.pem",
-                     "--module-key", "/var/lib/secureboot/db.key", "--module-cert", "/var/lib/secureboot/db.pem",
+                     "--efi-key", runtime_path(root, "/var/lib/secureboot/db.key"), "--efi-cert", runtime_path(root, "/var/lib/secureboot/db.pem"),
+                     "--ima-key", runtime_path(root, "/var/lib/secureboot/ima.key"), "--ima-cert", runtime_path(root, "/var/lib/secureboot/ima.pem"),
+                     "--module-key", runtime_path(root, "/var/lib/secureboot/db.key"), "--module-cert", runtime_path(root, "/var/lib/secureboot/db.pem"),
                      "--sign-file", plan["signFile"], "--evmctl", plan["evmctl"], "--ukify", plan["ukify"]])
         installer.verify(image, plan["efi"]["certificate"])
         private_public = command(["openssl", "pkey", "-in", plan["pcrKey"], "-pubout", "-outform", "DER"])
@@ -127,10 +155,14 @@ def prepare(plan):
 if __name__ == "__main__":
     if os.geteuid() != 0:
         raise ValueError("Run through sudo with an immutable Nix signing plan")
-    plan_path = Path(sys.argv[1]).resolve(strict=True)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("plan", type=Path)
+    parser.add_argument("--root", type=Path, default=Path("/"))
+    args = parser.parse_args()
+    plan_path = args.plan.resolve(strict=True)
     if plan_path.parent != Path("/nix/store"):
         raise ValueError("Expected an immutable Nix plan")
     plan = json.loads(plan_path.read_text())
     if plan["version"] != 1:
         raise ValueError("Unsupported plan")
-    prepare(plan)
+    prepare(plan, args.root)

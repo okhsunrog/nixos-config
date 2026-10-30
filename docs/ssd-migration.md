@@ -10,6 +10,48 @@ Before erasing NVMe, boot the SSD and verify that root, home and required
 filesystems belong to the external pool, without depending on the NVMe pool.
 Verify browser, Codex, ChatGPT, VPN and VKey access from that environment.
 
+## Temporary SSD system
+
+The `framework-ssd` configuration uses only `nova_external` filesystems and
+the external ESP (`8494cd60-68e6-4ab9-991b-10f82988f3e0`). Its firmware entry
+is `zbm-rs (SSD)`; the loader prefers pool GUID `3746946642497214640`.
+USB storage drivers are included in both loader and OS initramfs.
+
+Root and the separately received home are independent encryption roots. Both
+use the existing runtime `/etc/zfs/zroot.key`; do not include that key in Git
+or an ordinary Nix derivation. The disposable VM check exercises unlocking
+both roots and mounting the temporary home after a fresh boot.
+
+Build the SSD system explicitly:
+
+```sh
+nix build .#nixosConfigurations.framework-ssd.config.system.build.frameworkEfiPlan --out-link result-ssd-efi-plan
+nix build .#nixosConfigurations.framework-ssd.config.system.build.toplevel --out-link result-framework-ssd
+```
+
+For offline signing, mount the SSD root and use
+`sudo ./scripts/prepare-framework-loader.sh "$(readlink -e result-ssd-efi-plan)" --root /path/to/ssd-root`.
+The helper checks the mounted root dataset and writes signing state and PCR
+policy inside that root. Install the resulting system with `nixos-install
+--root /path/to/ssd-root --system "$(readlink -e result-framework-ssd)"
+--no-root-passwd --no-channel-copy`, with the SSD home mounted there too.
+The ordinary `rebuild-framework.sh` still targets the NVMe configuration;
+do not use it to update the temporary SSD system.
+
+Arctern and both desktop backup policies are disabled on SSD, so the reduced
+home cannot replace the full NAS backup. Nextcloud is not mounted and its
+copied autostart entry is disabled. A current copy of
+`/home/okhsunrog/Nextcloud/Passwords.kdbx` is placed at `~/Passwords.kdbx`
+with mode `0600` in the temporary home. Keep the Nextcloud client closed
+while using this environment.
+
+The temporary home retains browser profiles, credentials, application state,
+desktop profiles and the `zbm-rs`, `nixos-config`, `nixos-secrets`,
+`floppa-vpn` and `rust/tangleaf` checkouts. Large build output, expendable
+repositories, downloads, documents, Android development files and caches
+are removed only from the staging clone. The full home remains on NVMe
+and NAS.
+
 ## Full home restoration from NAS
 
 NAS: `10.77.77.100`, dataset

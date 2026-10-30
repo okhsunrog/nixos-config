@@ -158,6 +158,9 @@
           arctern.nixosModules.default
         ];
       };
+      nixosConfigurations.framework-ssd = self.nixosConfigurations.framework.extendModules {
+        modules = [ ./hosts/framework/ssd.nix ];
+      };
       formatter.${system} = pkgs.nixfmt-tree;
       packages.${system} = (import ./packages/corporate.nix { inherit pkgs; }) // {
         niri = import ./packages/niri.nix { inherit niri-upstream system; };
@@ -183,6 +186,19 @@
         inherit (pkgs) age sops;
       };
       checks.${system} = {
+        ssd-config = import ./tests/ssd-config.nix {
+          inherit pkgs;
+          framework = self.nixosConfigurations.framework;
+          ssd = self.nixosConfigurations.framework-ssd;
+        };
+        ssd-storage-vm = import ./tests/ssd-storage-vm.nix {
+          inherit
+            pkgs
+            nixpkgs
+            zbm-rs
+            system
+            ;
+        };
         desktop-runtime = import ./tests/desktop-runtime.nix {
           inherit pkgs;
           framework = self.nixosConfigurations.framework;

@@ -10,7 +10,7 @@ let
   system = "x86_64-linux";
   pkgs = import zbm-rs.inputs.nixpkgs { inherit system; };
   rescuePkgs = import zbm-rescue.inputs.nixpkgs { inherit system; };
-  esp = "eaa38b89-b406-469c-bbcf-e6be7a43e2e4";
+  esp = config.framework.storage.espPartuuid;
   state = "/var/lib/zbm-rs-signing";
   certificate = builtins.path {
     path = ./public/db.pem;
@@ -30,6 +30,11 @@ let
         "hid_generic"
         "atkbd"
         "i8042"
+      ]
+      ++ lib.optionals config.framework.storage.portable [
+        "usb_storage"
+        "uas"
+        "sd_mod"
       ];
       firmwarePaths = [ ];
     }
@@ -64,7 +69,12 @@ let
     forcedModules = [ "insyde_efivarfs" ];
     moduleOptions.insyde_efivarfs = "expose=1";
     loaderConfig = {
-      boot.mode = "menu";
+      boot = {
+        mode = "menu";
+      }
+      // lib.optionalAttrs (config.framework.storage.preferredPoolGuid != null) {
+        preferred_pool_guid = config.framework.storage.preferredPoolGuid;
+      };
       diagnostics = {
         esp_partuuid = esp;
         continuous = true;
@@ -129,12 +139,14 @@ in
     image = "${deployment}/esp/EFI/BOOT/BOOTX64.EFI";
     certificate = "/var/lib/secureboot/db.pem";
     partuuid = esp;
+    label = config.framework.storage.efiLabel;
   };
   # Retain the exact unsigned image and signing tools with each OS generation.
   system.extraDependencies = [ config.system.build.frameworkEfiPlan ];
   system.build.frameworkEfiPlan = pkgs.writeText "framework-efi-plan.json" (
     builtins.toJSON {
       version = 1;
+      rootDataset = config.framework.storage.rootDataset;
       image = toString image;
       certificate = toString certificate;
       inherit deployment toolPath;
@@ -150,7 +162,7 @@ in
       efi = {
         partuuid = esp;
         path = "EFI/zbm-rs/zbm-rs.EFI";
-        label = "zbm-rs";
+        label = config.framework.storage.efiLabel;
         certificate = "/var/lib/secureboot/db.pem";
       };
     }
