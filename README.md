@@ -246,6 +246,11 @@ the image and policy but does not write EFI files or change the system profile.
 
 ### Independent rescue loader
 
+Current deployment status and the planned verified candidate/known-good
+lifecycle are documented in [boot and recovery](docs/boot-recovery.md). After the
+NVMe migration, rescue is configured but absent from the new ESP/firmware menu;
+the old pinned version also lacks the planned hibernation cancellation guard.
+
 `zbm-rs (rescue)` uses `EFI/zbm-rs/rescue.EFI`, an unsigned image with
 `security.mode = "off"`, TPM support disabled in the loader and an ordinary kernel
 without forced lockdown/module-signature enforcement. Its source revision and

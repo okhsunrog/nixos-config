@@ -1,5 +1,10 @@
 # TODO
 
+- [ ] Implement and validate the independent rescue lifecycle described in
+  `docs/boot-recovery.md`: cancellation-only hibernation guard, exact-artifact VM
+  testing, retained known-good/candidate slots and build-closure retention.
+  Rescue is not installed on the new NVMe ESP. Install a verified baseline and
+  test physical boot before relying on it; keep an external recovery copy.
 - [ ] Verify the first physical NVMe boot after restoration, including KDE,
   niri, VPN, browser/VKey and existing credentials. Offline installation,
   standalone raw home restoration and the encrypted-storage VM check passed;
