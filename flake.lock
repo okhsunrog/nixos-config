@@ -625,17 +625,17 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1792364279,
-        "narHash": "sha256-szicnQj492kvGRohUsOQoX8otmfmZKMh3M9Fl4LQTqk=",
+        "lastModified": 1793393110,
+        "narHash": "sha256-AimKOwyNwYpRwMKfoATjqC7mEvFAOcuM87MaEa2GC0g=",
         "owner": "okhsunrog",
         "repo": "zbm-rs",
-        "rev": "4038ff09a44c674fc1b4b1126b0f21aa4d09706a",
+        "rev": "dc82575eb2d0b9cd9e9db1dafc4172838db8b585",
         "type": "github"
       },
       "original": {
         "owner": "okhsunrog",
         "repo": "zbm-rs",
-        "rev": "4038ff09a44c674fc1b4b1126b0f21aa4d09706a",
+        "rev": "dc82575eb2d0b9cd9e9db1dafc4172838db8b585",
         "type": "github"
       }
     },
@@ -644,14 +644,18 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 0,
-        "narHash": "sha256-7jlC1+eG/EvjmonJkQnXFvLQFOK7Wkjlvq0MG3cloTs=",
-        "path": "/nix/store/5aqnb4qmmwdi0x0qxyhhy9pjcliz8zvh-source",
-        "type": "path"
+        "lastModified": 1793393110,
+        "narHash": "sha256-AimKOwyNwYpRwMKfoATjqC7mEvFAOcuM87MaEa2GC0g=",
+        "owner": "okhsunrog",
+        "repo": "zbm-rs",
+        "rev": "dc82575eb2d0b9cd9e9db1dafc4172838db8b585",
+        "type": "github"
       },
       "original": {
-        "path": "/nix/store/5aqnb4qmmwdi0x0qxyhhy9pjcliz8zvh-source",
-        "type": "path"
+        "owner": "okhsunrog",
+        "repo": "zbm-rs",
+        "rev": "dc82575eb2d0b9cd9e9db1dafc4172838db8b585",
+        "type": "github"
       }
     },
     "zen-browser": {

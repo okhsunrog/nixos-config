@@ -20,6 +20,7 @@ let
   kernelPackages = import "${zbm-rs}/nix/security-kernel.nix" {
     pkgs = bootPkgs;
     kernelPackages = bootPkgs.linuxPackages_latest;
+    hibernationTpmSignature = config.boot.loader.zbm-rs.hibernation.enable;
     trustedCertificates = [
       (builtins.path {
         path = ./public/db.pem;

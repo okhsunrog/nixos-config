@@ -1,8 +1,9 @@
 # TODO
 
-- [ ] Implement and validate the independent rescue lifecycle described in
-  `docs/boot-recovery.md`: cancellation-only hibernation guard, exact-artifact VM
-  testing, retained known-good/candidate slots and build-closure retention.
+- [ ] Install and physically validate the independent rescue lifecycle described
+  in `docs/boot-recovery.md`. Cancellation-only guards, candidate/known-good
+  publication, FAT tests and exact-artifact OVMF menu/input checks passed;
+  the guarded source pin and build-closure retention are prepared here.
   Rescue is not installed on the new NVMe ESP. Install a verified baseline and
   test physical boot before relying on it; keep an external recovery copy.
 - [ ] Verify the first physical NVMe boot after restoration, including KDE,
@@ -14,11 +15,20 @@
   credential flow are implemented; an ordinary-kernel VM restored actual RAM
   through encrypted swap before importing ZFS. This does not validate signed
   hibernation under Lockdown. An opt-in Linux 7.2.9 port of Matthew Garrett's
-  17-patch TPM-signature RFC is being built and tested in zbm-rs; see
+  17-patch TPM-signature RFC passed full kernel/ZFS compilation in zbm-rs; VM
+  runtime validation remains incomplete. EFI INITRD-table and moving E820-map
+  fixes passed full rebuilds and handoff checks. One authenticated CRB/SHA-256
+  RAM restore passed, but the next hibernation exposed a stale TPM NULL-primary
+  context. Patch 0028 adds a fresh AK-attested context handoff; its affected
+  objects compile and the full build/repeat-cycle checks are pending. See
   `nix/patches/hibernation-tpm-7.2.9/README.md` there. Complete EFI/TPM and kexec
   VM coverage for the shared patched loader/target kernel, image-tampering
   rejection, enforced loader-policy integration
-  and physical testing before updating the pinned loader/kernel inputs here.
+  and physical testing before enabling normal use here. The source pins currently
+  select the published guarded baseline, not the unaccepted experimental kernel.
+  Boot-record v2 durable-attempt tracking passed ordinary RAM restoration;
+  validate consumed-image failure/reboot and TPM-unavailable repair scenarios
+  with the authenticated kernel too. Test SHA-256-only banks as on this laptop.
   Remove old generations and stale prepared artifacts after acceptance; intentional
   old-kernel downgrade research is out of scope. See `docs/boot-recovery.md` for
   the fixed architecture and remaining implementation work.

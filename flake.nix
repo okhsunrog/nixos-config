@@ -56,11 +56,10 @@
       url = "github:niri-wm/niri/fcbc971cf49a987b1e8d5ff1d64da6b1f61a1787";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Temporary power-loss diagnostic build. This immutable source is retained
-    # by the installed EFI plan; restore the GitHub input after the investigation.
-    # Also includes the installer bytecode fix from zbm-rs commit 7a38a5e.
-    zbm-rs.url = "path:/nix/store/5aqnb4qmmwdi0x0qxyhhy9pjcliz8zvh-source";
-    zbm-rescue.url = "github:okhsunrog/zbm-rs/4038ff09a44c674fc1b4b1126b0f21aa4d09706a";
+    zbm-rs.url = "github:okhsunrog/zbm-rs/dc82575eb2d0b9cd9e9db1dafc4172838db8b585";
+    # Independently pinned cancellation-only baseline; ordinary updates to the
+    # main loader must not move this input or replace the known-good EFI slot.
+    zbm-rescue.url = "github:okhsunrog/zbm-rs/dc82575eb2d0b9cd9e9db1dafc4172838db8b585";
     signed-modules = {
       url = "path:/var/lib/zbm-rs-public/framework-modules";
       flake = false;

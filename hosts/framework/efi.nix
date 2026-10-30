@@ -11,6 +11,7 @@ let
   pkgs = import zbm-rs.inputs.nixpkgs { inherit system; };
   rescuePkgs = import zbm-rescue.inputs.nixpkgs { inherit system; };
   esp = config.framework.storage.espPartuuid;
+  hibernation = config.boot.loader.zbm-rs.hibernation;
   state = "/var/lib/zbm-rs-signing";
   certificate = builtins.path {
     path = ./public/db.pem;
@@ -75,11 +76,12 @@ let
       // lib.optionalAttrs (config.framework.storage.preferredPoolGuid != null) {
         preferred_pool_guid = config.framework.storage.preferredPoolGuid;
       };
-      diagnostics = {
+      diagnostics = lib.optionalAttrs (!hibernation.enable) {
         esp_partuuid = esp;
         continuous = true;
       };
-      ui.title = "zbm-rs diagnostic";
+      resume = hibernation.resumeConfig;
+      ui.title = if hibernation.enable then "zbm-rs" else "zbm-rs diagnostic";
       ui.show_snapshots = true;
       zfs.import_policy = "host-id";
       security = {
@@ -107,6 +109,7 @@ let
     moduleOptions.insyde_efivarfs = "expose=1";
     loaderConfig = {
       boot.mode = "menu";
+      resume = hibernation.cancellationConfig;
       ui = {
         show_snapshots = true;
         title = "zbm-rs rescue";
@@ -167,20 +170,48 @@ in
       };
     }
   );
-  system.build.frameworkRescuePlan = pkgs.writeText "framework-rescue-plan.json" (
-    builtins.toJSON {
-      version = 1;
-      image = "${rescue}/esp/EFI/BOOT/BOOTX64.EFI";
-      installer = "${zbm-rs}/nix/install-efi.py";
-      inherit toolPath;
-      efi = {
-        partuuid = esp;
-        path = "EFI/zbm-rs/rescue.EFI";
-        label = "zbm-rs (rescue)";
-        certificate = null;
-      };
-    }
-  );
+  system.build.frameworkRescuePlan =
+    pkgs.runCommand "framework-rescue-plan.json"
+      {
+        nativeBuildInputs = [
+          pkgs.uv
+          pkgs.python3
+        ];
+        input = pkgs.writeText "framework-rescue-input.json" (
+          builtins.toJSON {
+            version = 2;
+            image = "${rescue}/esp/EFI/BOOT/BOOTX64.EFI";
+            manifest = "${rescue}/manifest.json";
+            installer = "${zbm-rs}/nix/rescue-efi.py";
+            resumeConfig = hibernation.cancellationConfig;
+            inherit toolPath;
+            efi = {
+              partuuid = esp;
+              path = "EFI/zbm-rs/rescue.EFI";
+              label = "zbm-rs (rescue)";
+              certificate = null;
+            };
+            candidate = {
+              path = "EFI/zbm-rs/rescue-candidate.EFI";
+              label = "zbm-rs (rescue candidate)";
+            };
+          }
+        );
+      }
+      ''
+        export PYTHONDONTWRITEBYTECODE=1 UV_NO_CACHE=1
+        uv run --offline --no-project --python ${pkgs.python3}/bin/python - "$input" "$out" <<'PY'
+        import importlib.util, json, sys
+        from pathlib import Path
+        spec = importlib.util.spec_from_file_location("resume", "${zbm-rs}/nix/protected-hibernation.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        plan = json.loads(Path(sys.argv[1]).read_text())
+        policy = plan.pop("resumeConfig")
+        plan["resumePolicySha256"] = module.policy_id(policy | {"role": "resume"})
+        Path(sys.argv[2]).write_text(json.dumps(plan, indent=2) + "\n")
+        PY
+      '';
   environment.systemPackages = [
     (pkgs.writeShellScriptBin "framework-rescue-update" ''
       exec /etc/nixos/scripts/update-framework-rescue.sh "$@"

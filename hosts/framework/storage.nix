@@ -51,6 +51,11 @@ in
       type = lib.types.nullOr lib.types.str;
       default = "965b36af-dc40-4e5d-aa7b-49f49407c3ef";
     };
+    swapPartuuid = lib.mkOption {
+      type = lib.types.str;
+      default = "08e3880a-963d-4b43-9b9d-65bd955c153c";
+      description = "Physical LUKS swap partition identity, independent of its decrypted swap UUID.";
+    };
     portable = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -58,6 +63,20 @@ in
   };
   config = {
     boot.loader.zbm-rs.enable = true;
+    # Declare topology independently of activation: rescue must retain the same
+    # cancellation guard even if the main system's hibernation is disabled.
+    boot.loader.zbm-rs.hibernation = lib.mkIf (cfg.swapLuksUuid != null) {
+      swap = {
+        type = "luks2";
+        partuuid = cfg.swapPartuuid;
+        luksDevice = "nvme-swap";
+      };
+      credential = {
+        type = "zfs-unlock";
+        poolGuid = cfg.preferredPoolGuid;
+        encryptionRoot = cfg.rootDataset;
+      };
+    };
     boot.initrd.secrets."/etc/zfs/zroot.key" = "/etc/zfs/zroot.key";
     boot.initrd.systemd.services."zfs-import-${cfg.pool}" = {
       requires = [ "initrd-nixos-copy-secrets.service" ];
@@ -80,11 +99,11 @@ in
     swapDevices = lib.optionals (cfg.swapLuksUuid != null) [
       { device = "/dev/mapper/nvme-swap"; }
     ];
-    # The current loader guard accepts only an unencrypted PARTUUID. Do not
-    # bypass it with stock resume after ZFS imports; encrypted resume needs
-    # support in the loader as well as in the target initramfs.
+    # Activation remains explicitly disabled by the module's default until the
+    # protected VM matrix and the exact laptop deployment are accepted.
+    boot.zfs.unsafeAllowHibernation = config.boot.loader.zbm-rs.hibernation.enable;
     systemd.sleep.settings.Sleep = lib.mkIf (cfg.swapLuksUuid != null) {
-      AllowHibernation = false;
+      AllowHibernation = config.boot.loader.zbm-rs.hibernation.enable;
       AllowHybridSleep = false;
       AllowSuspendThenHibernate = false;
     };
