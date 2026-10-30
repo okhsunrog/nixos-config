@@ -1,4 +1,4 @@
-{ config, ... }: {
+{ config, lib, ... }: {
   imports = [ ../../modules/corporate ];
   services.corporate-workstation = {
     enable = true;
@@ -8,5 +8,7 @@
   systemd.services.orbit = {
     requires = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
+    # Bound shutdown while Orbit's graceful termination is investigated.
+    serviceConfig.TimeoutStopSec = lib.mkForce 10;
   };
 }

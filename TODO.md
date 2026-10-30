@@ -1,5 +1,10 @@
 # TODO
 
+- [ ] Investigate Orbit/osquery graceful shutdown: Orbit receives SIGTERM but
+  remains alive until systemd kills it. The previous shutdown hit the full
+  35-second timeout. Framework now limits `orbit.service` to 10 seconds as a
+  workaround; inspect child-process shutdown and signal handling before
+  replacing this workaround with a proper fix.
 - [ ] Update the separately pinned AyuGram PLEngine package to use WebKitGTK
   2.54.2 or newer. The active NixOS generation currently retains WebKitGTK
   2.54.1 through `ayugram-plengine`; the system `webkitgtk_4_1` overlay does
