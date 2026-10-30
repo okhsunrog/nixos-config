@@ -123,6 +123,13 @@ partitions. LUKS2 support must cover the loader's pre-import image detection,
 cancellation and target-initramfs resume gate together. Using stock resume
 would bypass that protection. See `TODO.md`; suspend-to-RAM is unaffected.
 
+There is a second blocker: the current signed kernel reports
+`none [integrity] confidentiality` in `/sys/kernel/security/lockdown`.
+Upstream Linux checks `LOCKDOWN_HIBERNATION` in `hibernation_available()`
+(`kernel/power/hibernate.c`). Extending the LUKS2 guard alone does not resolve
+that policy. Disabling Lockdown/Secure Boot or changing kernel image trust
+requires a separate security decision; neither was weakened for migration.
+
 ## Dataset restoration completed, 2026-10-30
 
 All four datasets were restored with full raw streams, independently of their

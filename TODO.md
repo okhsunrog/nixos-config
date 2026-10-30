@@ -12,6 +12,9 @@
   checks. Test the encrypted path in a disposable VM before physical testing.
   The new 48 GiB encrypted swap is configured for ordinary paging meanwhile;
   hibernation, hybrid sleep and suspend-then-hibernate remain disabled.
+  Also resolve the kernel security policy: the running signed kernel reports
+  `lockdown=integrity`, which denies ordinary hibernation. Do not disable
+  Lockdown or Secure Boot as an implicit part of this migration.
 - [ ] Investigate Orbit/osquery graceful shutdown: Orbit receives SIGTERM but
   remains alive until systemd kills it. The previous shutdown hit the full
   35-second timeout. Framework now limits `orbit.service` to 10 seconds as a
