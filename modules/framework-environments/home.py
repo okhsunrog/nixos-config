@@ -7,6 +7,9 @@ import re
 import subprocess
 import sys
 import tempfile
+sys.path.insert(0, str(Path(__file__).parent))
+import profiles
+import migration
 
 DATASET = re.compile(r"[A-Za-z0-9_.:-]+(?:/[A-Za-z0-9_.:-]+)+\Z")
 NAME = re.compile(r"[a-z][a-z0-9_-]*\Z")
@@ -19,7 +22,7 @@ def run(*args):
 
 def load(path):
     data = json.loads(Path(path).read_text())
-    if data.get("version") != 1:
+    if data.get("version") not in (1, 2):
         raise ValueError("Unsupported environment manifest version")
     entries = data["entries"]
     if data["primary"] not in entries or data["current"] not in entries:
@@ -29,8 +32,15 @@ def load(path):
         if not NAME.fullmatch(name) or not DATASET.fullmatch(entry["dataset"]):
             raise ValueError("Invalid environment name or dataset")
         datasets.append(entry["dataset"])
-    if len(datasets) != len(set(datasets)):
+    mode = data.setdefault("homeMode", "separate")
+    if mode not in ("separate", "shared"):
+        raise ValueError("Unknown home mode")
+    if mode == "separate" and len(datasets) != len(set(datasets)):
         raise ValueError("Home datasets must be distinct")
+    if mode == "shared" and len({e["dataset"] for e in entries.values() if e["enable"]}) != 1:
+        raise ValueError("Shared homes require one dataset")
+    if mode == "shared" and len({e["backup"] for e in entries.values() if e["enable"]}) != 1:
+        raise ValueError("Shared homes require one backup policy")
     user = data["user"]
     if not re.fullmatch(r"[a-z_][a-z0-9_-]*", user):
         raise ValueError("Invalid user name")
@@ -40,6 +50,18 @@ def load(path):
     for key in ("uid", "gid"):
         if not isinstance(data[key], int) or data[key] <= 0:
             raise ValueError("Home owner must have a positive UID/GID")
+    cfg = data.get("configProfiles", {})
+    if cfg.get("enable"):
+        if mode != "shared" or cfg.get("root") != f"/home/.desktop-profiles/{user}":
+            raise ValueError("Profiles require shared home and the canonical profile root")
+        paths = cfg["mutableFiles"] + cfg["bindDirectories"]
+        for path in paths:
+            if not path or path.startswith("/") or any(p in ("", ".", "..") for p in path.split("/")):
+                raise ValueError("Unsafe profile path")
+        if len(paths) != len(set(paths)) or any(a != b and b.startswith(a + "/") for a in paths for b in paths):
+            raise ValueError("Overlapping profile paths")
+        if any(not re.fullmatch(r"/(?:[A-Za-z0-9_-]+/)+[A-Za-z0-9_-]+", k) for k in cfg["dconfKeys"]):
+            raise ValueError("Unsafe dconf key")
     return data
 
 
@@ -86,6 +108,16 @@ def references(profiles=Path("/nix/var/nix/profiles"), live=None):
     return result
 
 
+def active_environment():
+    manifest = Path("/run/current-system/etc/framework-environments.json")
+    if not manifest.exists():
+        raise ValueError("Cannot determine active desktop; use boot and reboot")
+    active = load(manifest)
+    marker = Path("/run/framework-desktop-profile.json")
+    runtime = json.loads(marker.read_text()) if marker.exists() else {"current": active["current"]}
+    return active, runtime
+
+
 def preflight(data, action):
     if action == "build":
         print("Build-only: runtime home checks are deferred until boot/switch.")
@@ -103,10 +135,30 @@ def preflight(data, action):
     selected = data["entries"][data["current"]]["dataset"]
     if action == "switch" and home_source() != selected:
         raise ValueError("Changing /home requires boot and a reboot; live switching is refused")
+    if action == "switch":
+        active, runtime = active_environment()
+        if (runtime["current"] != data["current"] or active["homeMode"] != data.get("homeMode", "separate")
+                or active.get("configProfiles", {}) != data.get("configProfiles", {})):
+            raise ValueError("Changing desktop profile or its layout requires boot and a reboot")
+    if data.get("configProfiles", {}).get("enable"):
+        root, state = profiles.prepared(data)
+        if (root / "pending.json").exists():
+            raise ValueError("Incomplete profile transaction: recover at boot before rebuilding")
+        for rel in state["layout"]["mutableFiles"]:
+            if not profiles.safe_path(Path(f"/home/{data['user']}"), rel).parent.is_dir():
+                raise ValueError(f"Missing profile destination parent: {rel}")
+        if action == "switch":
+            if state["current"] != data["current"]:
+                raise ValueError("Mounted desktop profile differs; reboot is required")
+            for rel in state["layout"]["bindDirectories"]:
+                source = run("findmnt", "-n", "-o", "FSROOT", "--mountpoint", f"/home/{data['user']}/{rel}")
+                expected = f"/.desktop-profiles/{data['user']}/{data['current']}/dirs/{rel}"
+                if source != expected:
+                    raise ValueError(f"Unexpected desktop bind mount: {rel}")
     # The source of shared checkouts must already be available, never fabricated.
     primary = data["entries"][data["primary"]]["dataset"]
     source = Path("/home") if home_source() == primary else Path("/var/lib/framework-environments/primary-home")
-    for path in data["sharedDirectories"]:
+    for path in data["sharedDirectories"] if data.get("homeMode", "separate") == "separate" else []:
         if not (source / data["user"] / path).is_dir():
             raise ValueError(f"Shared checkout unavailable: {source / data['user'] / path}")
     print("Home preflight passed; no dataset was created or changed.")
@@ -115,6 +167,8 @@ def preflight(data, action):
 def create(data, name, snapshot):
     if os.geteuid() != 0:
         raise ValueError("Run create with sudo")
+    if data.get("homeMode", "separate") == "shared":
+        raise ValueError("Shared home uses the existing primary dataset; create is disabled")
     if name == data["primary"]:
         raise ValueError("The primary home must be prepared separately")
     target = data["entries"][name]["dataset"]
@@ -197,6 +251,13 @@ def main():
     commands.add_parser("status")
     check = commands.add_parser("preflight")
     check.add_argument("--action", choices=["build", "boot", "switch"], default="boot")
+    profile = commands.add_parser("prepare-profiles")
+    profile.add_argument("--source", action="append", default=[], metavar="NAME=HOME")
+    profile.add_argument("--apply", action="store_true")
+    commands.add_parser("activate-profile")
+    migrate = commands.add_parser("migrate-settings")
+    migrate.add_argument("--from", dest="source", required=True)
+    migrate.add_argument("--apply", action="store_true")
     prepare = commands.add_parser("create")
     prepare.add_argument("name")
     source = prepare.add_mutually_exclusive_group(required=True)
@@ -208,6 +269,25 @@ def main():
         status(data)
     elif args.command == "preflight":
         preflight(data, args.action)
+    elif args.command == "prepare-profiles":
+        if os.geteuid() != 0:
+            raise ValueError("Run profile preparation with sudo")
+        active, runtime = active_environment()
+        if runtime["current"] != data["current"] or home_source() != data["entries"][data["current"]]["dataset"]:
+            raise ValueError("Prepare profiles from the currently running desktop and home")
+        sources = {}
+        for source in args.source:
+            name, sep, directory = source.partition("=")
+            if not sep or name in sources:
+                raise ValueError("Expected unique --source NAME=HOME")
+            sources[name] = directory
+        profiles.prepare(data, sources, args.apply)
+    elif args.command == "activate-profile":
+        profiles.activate(data)
+    elif args.command == "migrate-settings":
+        if os.geteuid() != 0:
+            raise ValueError("Run settings migration with sudo")
+        migration.migrate(data, args.source, args.apply)
     else:
         if args.name not in data["entries"]:
             raise ValueError(f"Unknown environment: {args.name}")

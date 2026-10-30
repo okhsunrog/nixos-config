@@ -1,5 +1,6 @@
 {
   pkgs,
+  config,
   home-manager,
   dux-shell,
   dux-calendar,
@@ -16,7 +17,7 @@
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    backupFileExtension = "before-dux-20261024";
+    # Collisions require explicit migration; never rename personal files on rebuild.
     extraSpecialArgs = {
       inherit
         dux-shell
@@ -25,6 +26,12 @@
         dux-search
         dux-gop
         ;
+    };
+    users.okhsunrog = {
+      imports = [
+        ./home/common.nix
+        (if config.framework.environments.current == "niri" then ./home/niri.nix else ./home/kde.nix)
+      ];
     };
   };
 }

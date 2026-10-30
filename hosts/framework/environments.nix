@@ -6,16 +6,34 @@
     user = "okhsunrog";
     uid = 1000;
     gid = 1000;
+    homeMode = "shared";
+    configProfiles = {
+      enable = true;
+      mutableFiles = [
+        ".config/gtk-3.0/gtk.css"
+        ".config/gtk-3.0/settings.ini"
+        ".config/gtk-4.0/gtk.css"
+        ".config/gtk-4.0/settings.ini"
+      ];
+      dconfKeys = map (key: "/org/gnome/desktop/interface/${key}") [
+        "gtk-theme"
+        "color-scheme"
+        "icon-theme"
+        "cursor-theme"
+        "cursor-size"
+        "accent-color"
+      ];
+    };
     entries = {
       kde = {
         dataset = "novafs/nixos0/data/home";
         backup = "mira";
       };
       niri = {
-        # Prepared from the primary home snapshot; keep independent user state.
+        # Ordinary application state is shared; only declared desktop exceptions differ.
         enable = true;
-        dataset = "novafs/nixos0/data/home-niri";
-        backup = "local";
+        dataset = "novafs/nixos0/data/home";
+        backup = "mira";
       };
     };
     variants.niri = ./desktops/niri.nix;

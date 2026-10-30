@@ -25,6 +25,8 @@ let
           environment {
             QT_QPA_PLATFORMTHEME "gtk3"
             QT_QPA_PLATFORMTHEME_QT6 "gtk3"
+            XCURSOR_THEME "Bibata-Modern-Ice"
+            XCURSOR_SIZE "24"
         ''
       ]
       (builtins.readFile "${templates}/niri.kdl")
@@ -44,7 +46,6 @@ let
           geometry-corner-radius 0
       }
     '';
-
   defaults = lib.genAttrs [ "colors" "layout" "alttab" "binds" "input" ] (
     name:
     pkgs.writeText "niri-dms-${name}.kdl" (
@@ -61,23 +62,10 @@ in
     dux-files.homeModules.default
     dux-search.homeModules.default
   ];
-  home.username = "okhsunrog";
-  home.homeDirectory = "/home/okhsunrog";
-  home.stateVersion = "26.05";
-  programs.home-manager.enable = true;
-  home.sessionVariables = {
-    TERMINAL = "rio";
-    QT_QPA_PLATFORMTHEME = "gtk3";
-    QT_QPA_PLATFORMTHEME_QT6 = "gtk3";
-  };
-  home.pointerCursor = {
-    package = pkgs.bibata-cursors;
-    name = "Bibata-Modern-Ice";
-    size = 24;
-  };
   home.packages = [
     dux-gop.packages.${pkgs.stdenv.hostPlatform.system}.default
     pkgs.adw-gtk3
+    pkgs.bibata-cursors
   ];
   programs.dank-material-shell = {
     enable = true;
@@ -141,10 +129,9 @@ in
       )
     } ${lib.escapeShellArg "${config.xdg.configHome}/dms/settings.json"}
   '';
-  # Update only the folder association; keep browser and all other MIME choices.
-  home.activation.duxFileManager = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    run ${pkgs.crudini}/bin/crudini --set "$HOME/.config/mimeapps.list" \
-      'Default Applications' inode/directory 'dev.duxlabs.files.desktop;'
+  xdg.configFile."niri-mimeapps.list".text = ''
+    [Default Applications]
+    inode/directory=dev.duxlabs.files.desktop;
   '';
   xdg.configFile."xdg-terminals.list".text = "rio.desktop\n";
   xdg.configFile."niri/config.kdl".text = baseConfig;

@@ -25,7 +25,7 @@ flock -n 9 || { echo 'Another Framework rebuild is already running.' >&2; exit 1
 "$repo/scripts/prefetch-framework-inputs.sh"
 base="$repo#nixosConfigurations.framework.config"
 nix build "$base.system.build.frameworkEnvironments" --out-link result-environments "$@"
-uv run --offline --no-cache --no-project --no-managed-python \
+sudo "$(command -v uv)" run --offline --no-cache --no-project --no-managed-python \
     "$repo/modules/framework-environments/home.py" \
     --manifest "$(readlink -e result-environments)" preflight --action "$action"
 nix build "$base.system.build.frameworkModuleSigningPlan" \
@@ -39,7 +39,7 @@ sudo "$repo/scripts/prepare-framework-loader.sh" "$(readlink -e result-efi-plan)
 nix build "$base.system.build.toplevel" --out-link result-framework "$@"
 system=$(readlink -e result-framework)
 # Recheck the exact closure and live mount after a potentially long build.
-uv run --offline --no-cache --no-project --no-managed-python \
+sudo "$(command -v uv)" run --offline --no-cache --no-project --no-managed-python \
     "$repo/modules/framework-environments/home.py" \
     --manifest "$system/etc/framework-environments.json" preflight --action "$action"
 if [[ $action == build ]]; then

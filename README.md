@@ -30,9 +30,9 @@ its first boot.
 ## Desktop experiments
 
 The [environment workflow](docs/desktop-environments.md) combines named NixOS
-specialisations with separate home datasets. KDE stays primary; the Niri
-specialisation uses a separately prepared clone of the primary home. The Niri desktop uses Home Manager and the complete Dux 2.0 suite, including
-its greeter, search, monitor, calendar and file manager. Shared checkouts,
+specialisations with one shared home and explicit desktop appearance exceptions.
+KDE stays primary; both desktops activate Home Manager. Niri uses the complete
+Dux 2.0 suite, including its greeter, search, monitor, calendar and file manager. Projects,
 Nextcloud and tmp_zfs retain their normal paths. Use `framework-home status` to
 inspect dependencies and `framework-rebuild boot` to prepare a reboot.
 

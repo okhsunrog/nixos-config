@@ -86,7 +86,8 @@ assert !niri.security.pam.services.dankshell.fprintAuth;
 assert !niri.security.pam.services.dankshell.allowNullPassword;
 assert !preview.security.pam.services.plasmalogin-auth.fprintAuth;
 assert !preview.security.pam.services.kde-fingerprint.unixAuth;
-assert preview.home-manager.users == { };
+assert preview.home-manager.users.okhsunrog.home.homeDirectory == "/home/okhsunrog";
+assert !(preview.home-manager.users.okhsunrog.xdg.configFile ? "niri/config.kdl");
 assert niri.programs.dms-greeter.enable;
 assert niri.programs.dms-greeter.compositor.name == "niri";
 assert !niri.security.pam.services.login.kwallet.enable;
@@ -111,7 +112,16 @@ assert lib.all (
 ) niri.environment.systemPackages;
 assert !niri.services.gnome.gnome-keyring.enable;
 assert niri.xdg.portal.config.niri."org.freedesktop.impl.portal.Secret" == "kwallet";
-assert niri.fileSystems."/home".device == "novafs/nixos0/data/home-niri";
+assert niri.fileSystems."/home".device == "novafs/nixos0/data/home";
+assert preview.fileSystems."/home".device == niri.fileSystems."/home".device;
+assert !(niri.fileSystems ? "/var/lib/framework-environments/primary-home");
+assert !(niri.fileSystems ? "/home/okhsunrog/code/nixos-config");
+assert niri.systemd.user.services.niri-secret-service.after == [ "niri.service" ];
+assert
+  preview.systemd.services.systemd-user-sessions.requires == [ "framework-desktop-profile.service" ];
+assert preview.systemd.services."user@1000".overrideStrategy == "asDropin";
+assert !preview.systemd.services.framework-desktop-profile.restartIfChanged;
+assert !preview.systemd.services.framework-desktop-profile.stopIfChanged;
 assert lib.all (a: a.assertion) niri.assertions;
 assert cfg.fileSystems."/home".device == "test/home";
 assert cfg.fileSystems."/home".neededForBoot;
@@ -131,10 +141,12 @@ pkgs.runCommand "framework-environments-tests"
       pkgs.uv
       pkgs.python3
     ];
-    HOME_HELPER = ../modules/framework-environments/home.py;
+    HOME_HELPER = "${../modules/framework-environments}/home.py";
   }
   ''
     uv run --offline --no-project --no-managed-python --no-cache \
       --python ${pkgs.python3}/bin/python3 ${./test_environments.py}
+    uv run --offline --no-project --no-managed-python --no-cache \
+      --python ${pkgs.python3}/bin/python3 ${./test_desktop_profiles.py}
     touch $out
   ''

@@ -6,7 +6,8 @@
   system,
 }:
 let
-  target =
+  makeTarget =
+    shared:
     (import "${nixpkgs}/nixos/lib/eval-config.nix" {
       inherit system;
       modules = [
@@ -50,18 +51,34 @@ let
           users.groups.tester.gid = 1000;
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          programs.dconf.enable = true;
+          home-manager.users = pkgs.lib.optionalAttrs shared {
+            tester = {
+              home.username = "tester";
+              home.homeDirectory = "/home/tester";
+              home.stateVersion = "26.05";
+            };
+          };
           framework.environments = {
             enable = true;
             user = "tester";
             uid = 1000;
             gid = 1000;
+            homeMode = if shared then "shared" else "separate";
+            configProfiles = pkgs.lib.mkIf shared {
+              enable = true;
+              mutableFiles = [ ".config/desktop" ];
+              bindDirectories = [ ".config/desktop-dir" ];
+              dconfKeys = [ "/org/gnome/desktop/interface/color-scheme" ];
+            };
             entries = {
               kde = {
                 dataset = "testpool/nixos/home";
                 backup = "mira";
               };
               experiment = {
-                dataset = "testpool/nixos/home-experiment";
+                dataset = if shared then "testpool/nixos/home" else "testpool/nixos/home-experiment";
+                backup = if shared then "mira" else "local";
               };
               empty = {
                 enable = false;
@@ -84,11 +101,13 @@ let
             pkgs.jq
             zbm-rs.packages.${system}.zbm-rs
           ];
-          system.extraDependencies = [ imageConfig ];
+          system.extraDependencies = [ imageConfig ] ++ pkgs.lib.optional (!shared) sharedTarget;
           system.stateVersion = "26.05";
         }
       ];
     }).config.system.build.toplevel;
+  target = makeTarget false;
+  sharedTarget = makeTarget true;
   loader = zbm-rs.packages.${system}.zbm-rs;
   imageConfig = pkgs.writeText "home-test-image-config" "{}";
 in
@@ -100,7 +119,10 @@ pkgs.testers.runNixOSTest {
     boot.supportedFilesystems = [ "zfs" ];
     virtualisation.memorySize = 3072;
     virtualisation.emptyDiskImages = [ 16000 ];
-    virtualisation.additionalPaths = [ target ];
+    virtualisation.additionalPaths = [
+      target
+      sharedTarget
+    ];
     environment.systemPackages = [
       pkgs.zfs
       pkgs.kexec-tools
@@ -150,6 +172,44 @@ pkgs.testers.runNixOSTest {
     boot("${target}", "/")
     machine.succeed("test ! -e /home/tester/.config/home-manager-environment; test $(cat /home/tester/.config/desktop) = main-later; test $(cat /home/tester/code/nixos-config/marker) = shared-edit; framework-home preflight --action switch")
     machine.fail("journalctl -b --no-pager | grep 'Duplicate entry'")
+    shared_helper = "${sharedTarget}/sw/bin/framework-home --manifest ${sharedTarget}/etc/framework-environments.json"
+    machine.succeed("mkdir -p /source /home/tester/.config/desktop-dir; echo kde-dir > /home/tester/.config/desktop-dir/value; mount -t zfs -o zfsutil testpool/nixos/home-experiment /source; mkdir -p /source/tester/.config/desktop-dir; echo niri-dir > /source/tester/.config/desktop-dir/value")
+    machine.succeed(shared_helper + " prepare-profiles --source kde=/home/tester --source experiment=/source/tester")
+    machine.succeed("test ! -e /home/.desktop-profiles/tester/state.json")
+    machine.succeed(shared_helper + " prepare-profiles --source kde=/home/tester --source experiment=/source/tester --apply")
+    machine.succeed("umount /source")
+    machine.fail(shared_helper + " preflight --action switch")
+    machine.succeed(shared_helper + " preflight --action boot")
+    machine.succeed("nix-env --profile /nix/var/nix/profiles/system --set ${sharedTarget}; ${sharedTarget}/bin/switch-to-configuration boot", timeout=120)
+    boot("${sharedTarget}", "/")
+    machine.wait_for_unit("home-manager-tester.service")
+    machine.succeed("test $(findmnt -n -o SOURCE --mountpoint /home) = testpool/nixos/home; test $(cat /home/tester/.config/desktop-dir/value) = kde-dir; framework-home preflight --action switch")
+    machine.succeed("systemctl start user@1000.service; systemctl is-active --quiet user@1000.service")
+    machine.fail("framework-home activate-profile")
+    machine.succeed("${sharedTarget}/bin/switch-to-configuration test", timeout=120)
+    machine.succeed("echo shared-app > /home/tester/.config/ordinary-application; echo shared-bookmark > /home/tester/.config/bookmarks")
+    machine.fail("${sharedTarget}/specialisation/experiment/bin/switch-to-configuration test")
+    boot("${sharedTarget}/specialisation/experiment", "/")
+    machine.wait_for_unit("home-manager-tester.service")
+    machine.succeed("test $(cat /home/tester/.config/desktop) = experiment; test $(cat /home/tester/.config/desktop-dir/value) = niri-dir; test $(cat /home/tester/.config/ordinary-application) = shared-app; test $(cat /home/tester/.config/bookmarks) = shared-bookmark; test $(cat /home/tester/Nextcloud/marker) = shared; test $(cat /home/tester/tmp_zfs/marker) = tmp-shared; framework-home preflight --action switch")
+    machine.succeed("test $(findmnt -n -o SOURCE --mountpoint /home) = testpool/nixos/home; ! mountpoint -q /var/lib/framework-environments/primary-home; test $(cat /home/tester/.config/home-manager-environment) = experiment-only; printf niri-edited > /home/tester/.config/desktop.new; mv /home/tester/.config/desktop.new /home/tester/.config/desktop")
+    machine.fail(shared_helper + " preflight --action switch")
+    boot("${sharedTarget}", "/")
+    machine.wait_for_unit("home-manager-tester.service")
+    machine.succeed("test $(cat /home/tester/.config/desktop) = main-later; test $(cat /home/tester/.config/desktop-dir/value) = kde-dir; test ! -e /home/tester/.config/home-manager-environment; test $(cat /home/tester/.config/ordinary-application) = shared-app; framework-home preflight --action switch")
+    boot("${sharedTarget}/specialisation/experiment", "/")
+    machine.wait_for_unit("home-manager-tester.service")
+    machine.succeed("test $(cat /home/tester/.config/desktop) = niri-edited; framework-home preflight --action switch")
+    # Fail closed if a required prepared profile is unavailable.
+    machine.succeed("mv /home/.desktop-profiles/tester/experiment/files.json /home/.desktop-profiles/tester/experiment/files.missing")
+    machine.fail(shared_helper + " preflight --action boot")
+    boot("${sharedTarget}", "/")
+    machine.fail("systemctl is-active --quiet framework-desktop-profile.service")
+    machine.fail("systemctl is-active --quiet systemd-user-sessions.service")
+    machine.fail("systemctl is-active --quiet home-manager-tester.service")
+    machine.fail("systemctl start user@1000.service")
+    machine.succeed("mv /home/.desktop-profiles/tester/experiment/files.missing /home/.desktop-profiles/tester/experiment/files.json")
+    machine.succeed("systemctl start framework-desktop-profile.service home-manager-tester.service systemd-user-sessions.service")
     machine.shutdown()
   '';
 }

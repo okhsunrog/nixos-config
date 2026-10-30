@@ -15,6 +15,13 @@
   programs.niri.enable = true;
   programs.niri.package = niriPatched;
   programs.niri.useNautilus = false;
+  environment.sessionVariables = {
+    TERMINAL = "rio";
+    QT_QPA_PLATFORMTHEME = "gtk3";
+    QT_QPA_PLATFORMTHEME_QT6 = "gtk3";
+    XCURSOR_THEME = "Bibata-Modern-Ice";
+    XCURSOR_SIZE = "24";
+  };
   programs.xwayland.enable = true;
   services.displayManager.defaultSession = "niri";
   programs.dms-greeter = {
@@ -41,7 +48,6 @@
       allowNullPassword = false;
     };
   };
-  home-manager.users.okhsunrog = import ../home/niri.nix;
   programs.dux-files = {
     enable = true;
     # The Home Manager module owns the single session service.
@@ -60,7 +66,12 @@
     description = "KWallet Secret Service for the Niri session";
     partOf = [ "graphical-session.target" ];
     wantedBy = [ "graphical-session.target" ];
-    serviceConfig.ExecStart = "${pkgs.kdePackages.kwallet}/bin/ksecretd";
+    after = [ "niri.service" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.kdePackages.kwallet}/bin/ksecretd";
+      Restart = "on-failure";
+      RestartSec = 2;
+    };
   };
   xdg.portal.extraPortals = [ pkgs.kdePackages.kwallet ];
   xdg.portal.config.niri."org.freedesktop.impl.portal.Secret" = lib.mkForce "kwallet";

@@ -73,6 +73,28 @@ class Homes(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "reboot"):
                 home.preflight(self.data, "switch")
 
+    def test_shared_dataset_does_not_allow_cross_desktop_live_switch(self):
+        self.data["homeMode"] = "shared"
+        self.data["sharedDirectories"] = []
+        self.data["entries"]["test"]["dataset"] = "pool/home"
+        active = copy.deepcopy(self.data)
+        with patch.object(home, "active_environment", return_value=(active, {"current": "kde"})), patch.object(home, "properties", return_value=("noauto", "/home")), patch.object(home, "run", return_value="available"), patch.object(home, "home_source", return_value="pool/home"):
+            home.preflight(self.data, "switch")
+            self.data["current"] = "test"
+            with self.assertRaisesRegex(ValueError, "reboot"):
+                home.preflight(self.data, "switch")
+
+    def test_shared_dataset_requires_consistent_backup_policy(self):
+        self.data["homeMode"] = "shared"
+        self.data["entries"]["test"]["dataset"] = "pool/home"
+        file = self.root / "manifest"
+        file.write_text(json.dumps(self.data))
+        with self.assertRaisesRegex(ValueError, "backup policy"):
+            home.load(file)
+        self.data["entries"]["test"]["backup"] = "mira"
+        file.write_text(json.dumps(self.data))
+        self.assertEqual(home.load(file)["homeMode"], "shared")
+
     def test_auto_mount_and_locked_key_are_refused(self):
         with patch.object(home, "properties", return_value=("on", "/home")):
             with self.assertRaisesRegex(ValueError, "canmount"):

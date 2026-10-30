@@ -21,5 +21,6 @@ Ultra Series 1, installed as a new BE in an existing encrypted ZFS pool.
   an independent owner-managed password-manager backup. Never add it to Git.
 - Private package downloads use the root-only runtime netrc. Never embed tokens
   or enrollment credentials into Nix expressions, URLs, derivations or archives.
-- Home Manager is explicitly enabled for the Niri specialisation. Keep its user
-  activation out of the primary KDE home, and preserve mutable application state.
+- KDE and Niri share the primary home and both activate Home Manager. Keep
+  ordinary application state shared and writable. Desktop exceptions must be
+  explicit and prepared separately; rebuilds must not migrate personal files.
