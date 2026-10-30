@@ -1,0 +1,55 @@
+--- a/Common/SettingsData.qml
++++ b/Common/SettingsData.qml
+@@ -3150,47 +3150,16 @@
+     }
+ 
+     function updateXResources() {
+-        const homeDir = Paths.strip(StandardPaths.writableLocation(StandardPaths.HomeLocation));
+-        const xresourcesPath = homeDir + "/.Xresources";
+         const themeName = cursorSettings.theme === "System Default" ? systemDefaultCursorTheme : cursorSettings.theme;
+         const size = cursorSettings.size || 24;
+-
+         if (!themeName)
+             return;
+ 
+-        const script = `
+-            xresources_file="${xresourcesPath}"
+-            [ -f "$xresources_file" ] && [ ! -w "$xresources_file" ] && exit 0
+-            theme_name="${themeName}"
+-            cursor_size="${size}"
+-
+-            current_theme=""
+-            current_size=""
+-            if [ -f "$xresources_file" ]; then
+-                current_theme=$(grep -E '^[[:space:]]*Xcursor\\.theme:' "$xresources_file" 2>/dev/null | sed 's/.*:[[:space:]]*//' | head -1)
+-                current_size=$(grep -E '^[[:space:]]*Xcursor\\.size:' "$xresources_file" 2>/dev/null | sed 's/.*:[[:space:]]*//' | head -1)
+-            fi
+-
+-            [ "$current_theme" = "$theme_name" ] && [ "$current_size" = "$cursor_size" ] && exit 0
+-
+-            if [ -f "$xresources_file" ]; then
+-                cp "$xresources_file" "\${xresources_file}.backup$(date +%s)"
+-            fi
+-
+-            temp_file="\${xresources_file}.tmp.$$"
+-            if [ -f "$xresources_file" ]; then
+-                grep -v '^[[:space:]]*Xcursor\\.theme:' "$xresources_file" | grep -v '^[[:space:]]*Xcursor\\.size:' > "$temp_file" 2>/dev/null || true
+-            else
+-                touch "$temp_file"
+-            fi
+-
+-            echo "Xcursor.theme: $theme_name" >> "$temp_file"
+-            echo "Xcursor.size: $cursor_size" >> "$temp_file"
+-            mv "$temp_file" "$xresources_file"
+-            xrdb -merge "$xresources_file" 2>/dev/null || true
+-        `;
+-
+-        Quickshell.execDetached(["sh", "-c", script]);
++        // Dux settings and niri/dms/cursor.kdl already persist this preference.
++        // Only update the current XWayland server; shared X resources belong
++        // to the user and must survive switching desktop environments.
++        const script = "printf \"Xcursor.theme: %s\\nXcursor.size: %s\\n\" \"$1\" \"$2\" | xrdb -merge 2>/dev/null || true";
++        Quickshell.execDetached(["sh", "-c", script, "dms-cursor", themeName, String(size)]);
+     }
+ 
+     function getCursorEnvironment() {

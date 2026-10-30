@@ -183,6 +183,11 @@
         inherit (pkgs) age sops;
       };
       checks.${system} = {
+        dux-cursor = import ./tests/dux-cursor.nix {
+          inherit pkgs;
+          dms =
+            self.nixosConfigurations.framework.config.specialisation.niri.configuration.home-manager.users.okhsunrog.programs.dank-material-shell.package;
+        };
         niri-capture-config = import ./tests/niri-capture-config.nix {
           inherit pkgs;
           niri = self.packages.${system}.niri;

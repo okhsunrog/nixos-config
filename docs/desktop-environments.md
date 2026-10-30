@@ -52,6 +52,11 @@ variables are selected by the Niri system/session configuration, without
 changing the shared default cursor or shell startup files. The Niri config
 retains its writable generated includes and GUI preferences.
 
+Dux owns cursor selection through its settings and `niri/dms/cursor.kdl`.
+Bibata is the Niri session fallback. The packaged Dux cursor update only sends
+resources to the current XWayland server; it does not rewrite shared
+`~/.Xresources` or create timestamped backups alongside that file.
+
 `kde-mimeapps.list` and `niri-mimeapps.list` select Dolphin and Dux Files
 respectively, without rewriting the shared `mimeapps.list`. Portals are
 selected in the NixOS desktop modules. Common autostart entries are preserved.

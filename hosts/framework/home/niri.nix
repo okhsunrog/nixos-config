@@ -69,6 +69,7 @@ in
   ];
   programs.dank-material-shell = {
     enable = true;
+    package = import ../../../packages/dux-shell.nix { inherit pkgs dux-shell; };
     systemd.enable = true;
     enableSystemMonitoring = true;
     enableVPN = true;
