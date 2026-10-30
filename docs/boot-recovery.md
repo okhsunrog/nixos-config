@@ -35,7 +35,9 @@ The authoritative generic design lives in zbm-rs
 - Target NixOS: integrity Lockdown, authenticated RAM images in LUKS2 swap, early
   resume before any ZFS import. Share the protected `kernelPackages` with the
   main loader, keeping kexec compiled in. Separate loader/target kernel builds
-  and compile-time exclusion of target kexec are not requirements.
+  and compile-time exclusion of target kexec are not requirements. Set
+  `sysctl.kernel.kexec_load_disabled=1` in target boot arguments; Linux applies
+  this before initramfs `/init`, disabling further kexec loads in NixOS.
 - Rescue: separate unsigned EFI boot, no hibernation/resume, no protected TPM
   capability advertisement, but the same swap detection and verified cancellation
   before booting an OS, exposing an unrestricted shell or mutating pools.
@@ -55,11 +57,21 @@ Full root currently has access to boot/IMA signing keys in `/var/lib/secureboot`
 The shared-kernel baseline accepts that such a compromise is already beyond the
 trusted-boot boundary. No concrete configured path with kexec authority but no
 signing-key access was identified in this review. The main loader's signed
-profile cannot constrain later kexec calls from NixOS. Compile-time exclusion or
-an early target-only kexec-load disable policy remain optional hardening, to be
-revisited if key isolation or the threat model changes. Neither is applied here.
-The cheap early sysctl is currently being considered separately; it does not
-require another kernel build and must not disable kexec in loader or rescue.
+profile itself cannot constrain later kexec calls from NixOS. The early sysctl
+policy is now configured in `hosts/framework/secureboot.nix` without a separate
+kernel build or initramfs service. It takes effect in a newly booted generation
+after rebuilding/installing; editing the configuration does not change the
+running kernel. Loader and rescue command lines are constructed independently
+and retain outgoing kexec. The exact target argument is covered by ordinary
+BootAuthorization signing. Compile-time exclusion remains outside this plan.
+
+Validation on October 30: the disposable encrypted ZFS/LUKS hibernation VM in
+zbm-rs passed with the target prohibition already set before udev and resume.
+Both kexec load interfaces and resetting the sysctl were rejected before and
+after actual RAM restoration; bootstrap retained kexec. The test used ordinary
+Linux 6.18.55, not the unfinished TPM/Lockdown backport. The host configuration
+evaluates with the argument for KDE and niri and retains its existing 7.2.9 kernel
+derivation. No host rebuild, reboot or runtime sysctl change was performed here.
 
 After the complete hibernation path works and has passed acceptance, remove old
 system generations and their stale prepared artifacts through the standard

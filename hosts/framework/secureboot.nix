@@ -71,6 +71,9 @@ in
     }
   ];
   boot.kernelPackages = kernelPackages;
+  # Target-only policy: Linux applies sysctl.* before executing initramfs /init.
+  # The separately constructed loader/rescue command lines keep outgoing kexec.
+  boot.kernelParams = [ "sysctl.kernel.kexec_load_disabled=1" ];
   system.build.unsignedFrameworkModules = bootPkgs.aggregateModules [
     config.boot.kernelPackages.kernel.modules
     config.boot.kernelPackages.${config.boot.zfs.package.kernelModuleAttribute}
