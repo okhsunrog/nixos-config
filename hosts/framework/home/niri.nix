@@ -27,7 +27,24 @@ let
             QT_QPA_PLATFORMTHEME_QT6 "gtk3"
         ''
       ]
-      (builtins.readFile "${templates}/niri.kdl");
+      (builtins.readFile "${templates}/niri.kdl")
+    + ''
+
+      // Keep the media viewer above the chat instead of in the scrolling layout.
+      window-rule {
+          match app-id=r#"^com\.ayugram\.desktop$"# title="^Media viewer$"
+          open-floating true
+          open-fullscreen false
+          open-maximized false
+          open-maximized-to-edges false
+          default-column-width { proportion 1.0; }
+          default-window-height { proportion 1.0; }
+          border { off; }
+          focus-ring { off; }
+          geometry-corner-radius 0
+      }
+    '';
+
   defaults = lib.genAttrs [ "colors" "layout" "alttab" "binds" "input" ] (
     name:
     pkgs.writeText "niri-dms-${name}.kdl" (
