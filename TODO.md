@@ -1,5 +1,7 @@
 # TODO
 
+- [ ] Complete the external SSD boot environment and NVMe migration following
+  `docs/ssd-migration.md`, including full standalone raw home restoration.
 - [ ] Investigate Orbit/osquery graceful shutdown: Orbit receives SIGTERM but
   remains alive until systemd kills it. The previous shutdown hit the full
   35-second timeout. Framework now limits `orbit.service` to 10 seconds as a
