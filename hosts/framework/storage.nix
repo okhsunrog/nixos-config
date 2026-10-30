@@ -23,7 +23,13 @@ in
     };
     encryptionRoots = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ cfg.pool ];
+      default = [
+        cfg.pool
+        cfg.rootDataset
+        cfg.homeDataset
+        "${cfg.pool}/nextcloud"
+        cfg.tmpDataset
+      ];
     };
     nextcloud = lib.mkOption {
       type = lib.types.bool;
@@ -31,7 +37,7 @@ in
     };
     espPartuuid = lib.mkOption {
       type = lib.types.str;
-      default = "eaa38b89-b406-469c-bbcf-e6be7a43e2e4";
+      default = "aafa93cb-dbf2-483c-8ca2-cb035104f8b9";
     };
     efiLabel = lib.mkOption {
       type = lib.types.str;
@@ -39,7 +45,11 @@ in
     };
     preferredPoolGuid = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = null;
+      default = "13099373940756918353";
+    };
+    swapLuksUuid = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = "965b36af-dc40-4e5d-aa7b-49f49407c3ef";
     };
     portable = lib.mkOption {
       type = lib.types.bool;
@@ -54,6 +64,30 @@ in
       after = [ "initrd-nixos-copy-secrets.service" ];
     };
     boot.zfs.requestEncryptionCredentials = cfg.encryptionRoots;
+    boot.initrd.luks.devices = lib.optionalAttrs (cfg.swapLuksUuid != null) {
+      nvme-swap = {
+        device = "/dev/disk/by-uuid/${cfg.swapLuksUuid}";
+        keyFile = "/etc/zfs/zroot.key";
+      };
+    };
+    boot.initrd.systemd.services."systemd-cryptsetup@nvme\\x2dswap" =
+      lib.mkIf (cfg.swapLuksUuid != null)
+        {
+          overrideStrategy = "asDropin";
+          requires = [ "initrd-nixos-copy-secrets.service" ];
+          after = [ "initrd-nixos-copy-secrets.service" ];
+        };
+    swapDevices = lib.optionals (cfg.swapLuksUuid != null) [
+      { device = "/dev/mapper/nvme-swap"; }
+    ];
+    # The current loader guard accepts only an unencrypted PARTUUID. Do not
+    # bypass it with stock resume after ZFS imports; encrypted resume needs
+    # support in the loader as well as in the target initramfs.
+    systemd.sleep.settings.Sleep = lib.mkIf (cfg.swapLuksUuid != null) {
+      AllowHibernation = false;
+      AllowHybridSleep = false;
+      AllowSuspendThenHibernate = false;
+    };
     boot.initrd.availableKernelModules = lib.optionals cfg.portable [
       "uas"
       "sd_mod"

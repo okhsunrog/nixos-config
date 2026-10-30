@@ -5,13 +5,20 @@ target=${1:-/mnt/nixos}
 dataset=novafs/nixos0/root
 [[ $EUID == 0 ]]
 [[ $(findmnt -n -o SOURCE --target "$target") == "$dataset" ]]
-for pair in 'mountpoint:/' 'canmount:noauto' 'overlay:off' 'normalization:none' 'utf8only:off' 'encryptionroot:novafs'; do
+altroot=$(zpool get -H -o value altroot novafs)
+expected_mountpoint=/
+if [[ $altroot != - ]]; then expected_mountpoint=${altroot%/}; fi
+[[ $(zfs get -H -o value mountpoint "$dataset") == "$expected_mountpoint" ]]
+for pair in 'canmount:noauto' 'overlay:off' 'normalization:none' 'utf8only:off'; do
     property=${pair%%:*}
     expected=${pair#*:}
     [[ $(zfs get -H -o value "$property" "$dataset") == "$expected" ]]
 done
+encryption_root=$(zfs get -H -o value encryptionroot "$dataset")
+[[ $encryption_root == novafs || $encryption_root == "$dataset" ]]
+zfs load-key -n -L file:///etc/zfs/zroot.key "$encryption_root"
 [[ $(findmnt -n -o SOURCE --target "$target/home") == novafs/nixos0/data/home ]]
-system=$(readlink -e "$repo/result-framework")
+system=${2:-$(readlink -e "$repo/result-framework")}
 bundle="$target/boot/zbm-rs/nixos/$(basename "$system")"
 [[ -s $bundle/kernel && -s $bundle/initrd && -s $bundle/prepared.json ]]
 [[ $(stat -Lc %a "$bundle/initrd") == 600 ]]

@@ -1,7 +1,17 @@
 # TODO
 
-- [ ] Complete the external SSD boot environment and NVMe migration following
-  `docs/ssd-migration.md`, including full standalone raw home restoration.
+- [ ] Verify the first physical NVMe boot after restoration, including KDE,
+  niri, VPN, browser/VKey and existing credentials. Offline installation,
+  standalone raw home restoration and the encrypted-storage VM check passed;
+  see `docs/ssd-migration.md`.
+- [ ] Extend the zbm-rs hibernation guard to LUKS2 swap before enabling
+  hibernation. The existing guard opens a plain swap PARTUUID directly; the
+  loader must unlock and inspect the mapped swap before any writable ZFS
+  import, and the target initramfs must resume from that same mapping before
+  importing pools. Keep the saved-session cancellation UI and fail-closed
+  checks. Test the encrypted path in a disposable VM before physical testing.
+  The new 48 GiB encrypted swap is configured for ordinary paging meanwhile;
+  hibernation, hybrid sleep and suspend-then-hibernate remain disabled.
 - [ ] Investigate Orbit/osquery graceful shutdown: Orbit receives SIGTERM but
   remains alive until systemd kills it. The previous shutdown hit the full
   35-second timeout. Framework now limits `orbit.service` to 10 seconds as a

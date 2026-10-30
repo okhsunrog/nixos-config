@@ -15,10 +15,19 @@ let
 in
 assert framework.config.fileSystems."/".device == "novafs/nixos0/root";
 assert framework.config.boot.loader.zbm-rs.efi.label == "zbm-rs";
+assert framework.config.boot.loader.zbm-rs.efi.partuuid == "aafa93cb-dbf2-483c-8ca2-cb035104f8b9";
+assert framework.config.framework.storage.preferredPoolGuid == "13099373940756918353";
+assert
+  framework.config.boot.initrd.luks.devices.nvme-swap.device
+  == "/dev/disk/by-uuid/965b36af-dc40-4e5d-aa7b-49f49407c3ef";
+assert framework.config.boot.initrd.luks.devices.nvme-swap.keyFile == "/etc/zfs/zroot.key";
+assert map (swap: swap.device) framework.config.swapDevices == [ "/dev/mapper/nvme-swap" ];
 assert cfg.fileSystems."/".device == "nova_external/nixos0/root";
 assert cfg.fileSystems."/home".device == "nova_external/nixos0/data/home";
 assert onlyExternal cfg && onlyExternal niri;
 assert !(cfg.fileSystems ? "/home/okhsunrog/Nextcloud");
+assert cfg.swapDevices == [ ];
+assert cfg.boot.initrd.luks.devices == { };
 assert !cfg.services.arctern.enable && !cfg.systemd.services.arctern.enable;
 assert cfg.framework.environments.entries.kde.backup == "none";
 assert cfg.framework.environments.entries.niri.backup == "none";

@@ -113,12 +113,76 @@ The pool root uses AES-256-GCM with the existing passphrase file. Restored
 raw datasets retain their original data keys and normalization properties;
 explicitly verify the inherited operational properties after receiving them.
 
-Swap was formatted with the existing `/etc/zfs/zroot.key`, tested successfully,
-and left closed/inactive. It is not yet integrated into the NVMe boot config.
-The NVMe ESP does not yet contain its new loader.
+Swap was formatted with the existing `/etc/zfs/zroot.key` and tested
+successfully. The NVMe configuration unlocks it in the initramfs after copying
+the runtime secrets, then activates `/dev/mapper/nvme-swap` as ordinary swap.
+The isolated SSD configuration does not unlock or activate this device.
 
-Only the non-mountable parents `novafs/nixos0` and `novafs/nixos0/data` have
-been created. Create the final `root`, `data/home`, `nextcloud`, and
-`tmp_zfs_home` datasets by receiving their full streams into new targets;
-do not create empty placeholders requiring a forced overwrite. Pool import
-uses `cachefile=none` and a temporary altroot under the SSD staging directory.
+Hibernation is not enabled: the current zbm-rs guard accepts only plain swap
+partitions. LUKS2 support must cover the loader's pre-import image detection,
+cancellation and target-initramfs resume gate together. Using stock resume
+would bypass that protection. See `TODO.md`; suspend-to-RAM is unaffected.
+
+## Dataset restoration completed, 2026-10-30
+
+All four datasets were restored with full raw streams, independently of their
+source ancestry. Each has `origin=-` and no pending receive token. Snapshot
+GUIDs were compared and the existing key file was verified for every root.
+
+| Target | Source snapshot | Snapshot GUID |
+| --- | --- | --- |
+| `novafs/nixos0/root` | SSD `root@ssd-backup-20261030T025128Z` | `13966331272922709518` |
+| `novafs/nixos0/data/home` | NAS `home@arctern_2026-10-30T025936Z` | `7366286363519359454` |
+| `novafs/nextcloud` | SSD `nextcloud@ssd-backup-20261030T014122Z` | `15626903444678666199` |
+| `novafs/tmp_zfs_home` | SSD `tmp_zfs@ssd-backup-20261029T182707Z` | `8568705743908385826` |
+
+These four raw datasets are independent encryption roots, in addition to the
+encrypted pool root. All five use the same existing runtime key file. The
+NVMe initramfs explicitly unlocks every root; matching passphrases do not
+make independently received data keys inherit from the pool root.
+
+During offline preparation the pool uses `cachefile=none` and altroot
+`/home/okhsunrog/tmp_zfs/codex_tmp/nvme-repartition/target`. Restored mounts
+must remain under that directory, without replacing the running SSD mounts.
+
+## NVMe boot installation completed, 2026-10-30
+
+Installed generation **69**, with the KDE parent and shared-home `niri`
+specialisation. The native system is:
+
+```
+/nix/store/0j3w297nz9d9vziyr7hk4p59grx1h9sd-nixos-system-nova-nixos-26.11.20261020.02c087f
+```
+
+The signed loader is installed on the new internal ESP at
+`EFI/zbm-rs/zbm-rs.EFI`, with an identical signed fallback at
+`EFI/BOOT/BOOTX64.EFI`. Firmware entry `0001` (`zbm-rs`) points at the new ESP
+and is first in the boot order. The external SSD entry `0004` is retained.
+The old rescue/ZFSBootMenu entries still refer to the erased ESP; they were
+not repurposed. Use the SSD for recovery if the first NVMe boot fails.
+
+`novafs` bootfs is `novafs/nixos0/root`. Installation was performed offline
+through a recursive bind mount at `/mnt/nvme-restore`, so Nix's local-store
+permission checks do not require making the owner's private home traversable.
+The running SSD system/profile were not switched.
+
+Validation completed:
+
+- Native KDE and niri closures built with the existing pinned kernel.
+- The encrypted-pool VM booted with five independent encryption roots and
+  automatically unlocked and activated LUKS2 swap using the same runtime key.
+- The isolated SSD config still has no NVMe filesystems or swap dependency.
+- Prepared root generation: Bootspec hash, kernel signature, CMS authorization
+  and kernel/initramfs hashes verified with `scripts/verify-framework.sh`.
+- Internal main/fallback EFI signatures checked; all pools reported healthy.
+
+The VM check exposed an old root-written `__pycache__` in an installer store
+output. That output was repaired through Nix. The installer now disables
+bytecode before importing its support modules (zbm-rs commit `7a38a5e`),
+with a regression test. The immutable diagnostic source used by this flake
+retains the previous diagnostic changes and adds only that fix and its test;
+unrelated dirty checkout changes were not bundled or reverted.
+
+Physical firmware boot, TPM policy acceptance and desktop authentication
+remain to be checked after the owner's manual reboot. Hibernation remains
+disabled pending the encrypted-swap guard work described above.

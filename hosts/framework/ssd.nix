@@ -7,6 +7,7 @@
     efiLabel = "zbm-rs (SSD)";
     preferredPoolGuid = "3746946642497214640";
     nextcloud = false;
+    swapLuksUuid = null;
     tmpDataset = "${config.framework.storage.homeDataset}/tmp_zfs";
     encryptionRoots = [
       config.framework.storage.rootDataset
