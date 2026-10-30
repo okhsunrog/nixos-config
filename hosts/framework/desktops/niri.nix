@@ -9,7 +9,7 @@
 }:
 {
   imports = [
-    dux-greeter.nixosModules.default
+    (import ../../../packages/dux-greeter-module.nix { inherit dux-greeter; })
     dux-files.nixosModules.default
   ];
   programs.niri.enable = true;

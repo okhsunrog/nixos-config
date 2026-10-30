@@ -8,7 +8,7 @@ in
     (_final: _previous: { ayugram-desktop = packages.default; })
   ];
   environment.systemPackages = [ plugins ];
-  systemd.user.tmpfiles.rules = [
+  home-manager.users.okhsunrog.systemd.user.tmpfiles.rules = [
     "d %h/.local/share/AyuGramDesktop/plugins 0700 - - -"
     "L+ %h/.local/share/AyuGramDesktop/plugins/ayu-plengine-channel-reader.so - - - - ${plugins}/lib/ayugram/plugins/ayu-plengine-channel-reader.so"
     "L+ %h/.local/share/AyuGramDesktop/plugins/ayu-plengine-smoke-plugin.so - - - - ${plugins}/lib/ayugram/plugins/ayu-plengine-smoke-plugin.so"

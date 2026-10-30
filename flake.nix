@@ -183,6 +183,10 @@
         inherit (pkgs) age sops;
       };
       checks.${system} = {
+        desktop-runtime = import ./tests/desktop-runtime.nix {
+          inherit pkgs;
+          framework = self.nixosConfigurations.framework;
+        };
         dux-cursor = import ./tests/dux-cursor.nix {
           inherit pkgs;
           dms =

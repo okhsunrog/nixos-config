@@ -136,6 +136,12 @@ in
   '';
   xdg.configFile."xdg-terminals.list".text = "rio.desktop\n";
   xdg.configFile."niri/config.kdl".text = baseConfig;
+  # These Plasma integration modules can survive in a migrated GTK profile.
+  # Only clean the active Niri profile; preserve other user-selected modules.
+  home.activation.niriGtkModules = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run ${pkgs.uv}/bin/uv run --offline --no-project --no-cache --no-managed-python \
+      --python ${pkgs.python3}/bin/python3 ${./clean-niri-gtk.py}
+  '';
   # DMS edits its own generated includes. Seed them once, without making them
   # immutable or replacing user changes on subsequent rebuilds.
   home.activation.duxNiriDefaults = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

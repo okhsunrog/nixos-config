@@ -14,6 +14,7 @@ let
         home-manager.nixosModules.home-manager
         zbm-rs.nixosModules.default
         ../modules/framework-environments
+        ../modules/zfs-udev-initrd.nix
         "${nixpkgs}/nixos/modules/profiles/qemu-guest.nix"
         "${nixpkgs}/nixos/modules/testing/test-instrumentation.nix"
         {
@@ -157,6 +158,7 @@ pkgs.testers.runNixOSTest {
         machine.connected = False
         machine.connect()
         machine.wait_for_unit("multi-user.target")
+        machine.fail("journalctl -b -u systemd-udevd.service --no-pager | grep 'Failed to find and pin callout binary'")
     boot("${target}", "/mnt")
     machine.succeed("test $(cat /etc/environment-marker) = kde; test $(findmnt -n -o SOURCE --mountpoint /home) = testpool/nixos/home; framework-home preflight --action switch")
     status = machine.succeed("framework-home status")

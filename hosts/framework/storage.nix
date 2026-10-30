@@ -1,5 +1,6 @@
 { ... }:
 {
+  imports = [ ../../modules/zfs-udev-initrd.nix ];
   boot.loader.zbm-rs.enable = true;
   boot.initrd.secrets."/etc/zfs/zroot.key" = "/etc/zfs/zroot.key";
   boot.initrd.systemd.services.zfs-import-novafs = {
