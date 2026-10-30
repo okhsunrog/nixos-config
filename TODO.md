@@ -4,17 +4,19 @@
   niri, VPN, browser/VKey and existing credentials. Offline installation,
   standalone raw home restoration and the encrypted-storage VM check passed;
   see `docs/ssd-migration.md`.
-- [ ] Extend the zbm-rs hibernation guard to LUKS2 swap before enabling
-  hibernation. The existing guard opens a plain swap PARTUUID directly; the
-  loader must unlock and inspect the mapped swap before any writable ZFS
-  import, and the target initramfs must resume from that same mapping before
-  importing pools. Keep the saved-session cancellation UI and fail-closed
-  checks. Test the encrypted path in a disposable VM before physical testing.
-  The new 48 GiB encrypted swap is configured for ordinary paging meanwhile;
-  hibernation, hybrid sleep and suspend-then-hibernate remain disabled.
-  Also resolve the kernel security policy: the running signed kernel reports
-  `lockdown=integrity`, which denies ordinary hibernation. Do not disable
-  Lockdown or Secure Boot as an implicit part of this migration.
+- [ ] Complete authenticated hibernation under integrity Lockdown before
+  enabling it on the laptop. The zbm-rs LUKS2 guard and shared ZFS-unlock
+  credential flow are implemented; an ordinary-kernel VM restored actual RAM
+  through encrypted swap before importing ZFS. This does not validate signed
+  hibernation under Lockdown. An opt-in Linux 7.2.9 port of Matthew Garrett's
+  17-patch TPM-signature RFC is being built and tested in zbm-rs; see
+  `nix/patches/hibernation-tpm-7.2.9/README.md` there. Complete EFI/TPM and kexec
+  VM coverage, image-tampering rejection, enforced loader-policy integration
+  and physical testing before updating the pinned loader/kernel inputs here.
+  Preserve resume-before-import ordering and explicit saved-session
+  cancellation. Do not disable Lockdown or Secure Boot. The 48 GiB LUKS2 swap
+  remains configured for ordinary paging; hibernation, hybrid sleep and
+  suspend-then-hibernate remain disabled in this configuration.
 - [ ] Investigate Orbit/osquery graceful shutdown: Orbit receives SIGTERM but
   remains alive until systemd kills it. The previous shutdown hit the full
   35-second timeout. Framework now limits `orbit.service` to 10 seconds as a
