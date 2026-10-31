@@ -66,6 +66,7 @@ in
     # Declare topology independently of activation: rescue must retain the same
     # cancellation guard even if the main system's hibernation is disabled.
     boot.loader.zbm-rs.hibernation = lib.mkIf (cfg.swapLuksUuid != null) {
+      enable = !cfg.portable;
       swap = {
         type = "luks2";
         partuuid = cfg.swapPartuuid;
@@ -99,8 +100,8 @@ in
     swapDevices = lib.optionals (cfg.swapLuksUuid != null) [
       { device = "/dev/mapper/nvme-swap"; }
     ];
-    # Activation remains explicitly disabled by the module's default until the
-    # protected VM matrix and the exact laptop deployment are accepted.
+    # The internal installation uses the VM-validated protected path. Portable
+    # repair systems retain ordinary paging without enabling hibernation.
     boot.zfs.unsafeAllowHibernation = config.boot.loader.zbm-rs.hibernation.enable;
     systemd.sleep.settings.Sleep = lib.mkIf (cfg.swapLuksUuid != null) {
       AllowHibernation = config.boot.loader.zbm-rs.hibernation.enable;

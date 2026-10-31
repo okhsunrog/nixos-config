@@ -1,15 +1,19 @@
 # Framework boot and recovery
 
-## Current installation, checked October 30, 2026
+## Current installation, checked October 31, 2026
 
 The main signed zbm-rs image is installed at `EFI/zbm-rs/zbm-rs.EFI` on the
 internal ESP, PARTUUID `aafa93cb-dbf2-483c-8ca2-cb035104f8b9`. Entry `0001` is
 the current firmware boot entry. `EFI/BOOT/BOOTX64.EFI` contains the same main
-image; it is not an independent recovery version. After the NVMe migration,
-the new ESP has no rescue image or separate rescue firmware entry.
+image; it is not an independent recovery version. The independent unsigned
+rescue candidate is now staged at `EFI/zbm-rs/rescue-candidate.EFI`, entry `0002`.
+Its SHA-256 is
+`752790bff27fce1412b63441d3f35b335fc9f372dddc8ae55de3621691345a8f`.
+The existing boot order still starts with `0001`; no BootNext was set. The
+candidate has not been physically accepted or promoted to `rescue.EFI`.
 
 The prepared configuration pins the main source to
-`208c5349a4d699084023b46a363785ed883108c8`, with the VM-tested experimental
+`911e6b06457cc1ba6a6df84260cf9cb361d72eaf`, with the VM-tested experimental
 authenticated-resume backend. The independently retained rescue stays at
 `dc82575eb2d0b9cd9e9db1dafc4172838db8b585`, the cancellation-only guarded
 baseline which rejects enforced resume. The rescue keeps its own Nixpkgs, kernel and ZFS. Normal
@@ -18,9 +22,10 @@ stages a candidate; promotion requires the exact tested hash and receipt, as
 described below. The source pin is not by itself a pin of the complete artifact:
 retain the built plan, public image inputs, manifest and closure too.
 
-These are source-configuration changes, not an installed EFI update. Host
-hibernation remains disabled. No rescue installation or firmware changes were
-performed during this work.
+The configuration enables protected hibernation on the internal NVMe installation;
+the portable SSD retains ordinary paging without hibernation. The owner-signed
+production build is in progress. The running kernel and main EFI image have not
+yet been replaced. The rescue candidate is installed separately as described above.
 
 Source validation on October 31 passed after the main input update: Nix formatting,
 ShellCheck, `ssd-config` and the disposable encrypted ZFS/LUKS storage-boot VM.
@@ -28,8 +33,8 @@ Lockfile comparison confirmed that only the main zbm-rs node changed. KDE and
 niri retain the early kexec prohibition; the rescue policy remains `cancel-only`.
 Evaluation with the hibernation option enabled selects backend
 `linux-tpm-signature-v2`, context-handoff protocol 1 and record protocol 2 with
-the configured LUKS2/ZFS-unlock topology. That evaluation neither builds nor
-installs the production kernel; the checked-in option remains disabled.
+the configured LUKS2/ZFS-unlock topology. These checks do not establish physical
+hardware acceptance.
 
 ## Agreed protected hibernation direction
 
@@ -113,8 +118,8 @@ required cancellation on the following boot. The complete OVMF Secure Boot →
 enforced zbm-rs → PE/IMA/CMS-authorized NixOS chain restored RAM and created the
 next image. It also checked missing/wrong signed profiles, F10 preserving swap,
 confirmed discard-only staying in the menu and cold boot after cancellation.
-This Framework currently uses CRB. The installed host kernel/loader are unchanged
-and hibernation remains disabled.
+This Framework currently uses CRB. The running host kernel/loader still predate
+this deployment; physical hibernation has not been attempted.
 
 Read-only hardware checks confirm that this Framework exposes only the SHA-256
 PCR bank and records ExitBootServices invocation/success events in PCR5. These
@@ -134,7 +139,10 @@ times. A deliberately unavailable guest TPM stopped resume before pool import
 and left the image intact; restoring the exact clean initramfs/TPM allowed retry,
 the next hibernation and the third restoration. The original boot ID, RAM-only
 data, healthy pool and early kexec prohibition survived; the finish hook cleared
-the durable attempt record.
+the durable attempt record. The same three-restoration interruption scenario also
+passed with Linux's default image compression enabled. A separate complete
+protected-chain VM passed with a compressed image too. Both runs retained the
+separate disposable VM signing identities; owner keys were not passed to guests.
 
 Empty-swap repair without TPM also passed with integrity Lockdown and ordinary
 paging. This explicit repair scenario uses `systemd.tpm2_wait=0` so systemd does
@@ -147,8 +155,8 @@ kernel/initrd and normalized swap/credential policy, and are checked before
 cloning and handoff, including cold boots. Real PE/IMA/CMS publisher validation
 passed. Backend `linux-tpm-signature-v2` requires context-handoff protocol 1 and
 boot-record protocol 2. This host still needs a matching owner-signed kernel,
-target and loader build using its public trust certificates, rescue installation
-and physical acceptance. The disposable VM's signed artifacts are not reused.
+target and loader build using its public trust certificates and physical
+acceptance. The disposable VM's signed artifacts are not reused.
 
 After the complete hibernation path works and has passed acceptance, remove old
 system generations and their stale prepared artifacts through the standard
@@ -157,6 +165,36 @@ Intentional kexec through old kernels and research into their possible TPM
 provenance bypass are outside scope. VM acceptance still covers the supported
 patched-loader-to-patched-target path, authenticated RAM restoration and rejection
 of corrupted images or invalid/unavailable TPM evidence.
+
+## Physical acceptance after installation
+
+Installation uses `./scripts/rebuild-framework.sh boot`: it prepares the next
+boot without switching the running desktop or rebooting automatically. Keep the
+previous generations until the new boot and repeated hibernation pass.
+
+First test the staged rescue through the firmware menu with Secure Boot disabled.
+Only promote the exact candidate hash after a successful physical boot. Re-enable
+Secure Boot before returning to the protected main entry.
+
+After booting the new internal generation, check the active closure, the
+`[integrity]` Lockdown mode, the target kexec prohibition, available sleep states,
+and early resume/TPM logs:
+
+```sh
+readlink -f /run/current-system
+cat /sys/kernel/security/lockdown
+sysctl kernel.kexec_load_disabled
+cat /sys/power/state
+journalctl -b -u zbm-resume.service
+sudo journalctl -b -k | rg -i 'tpm|hibern|lockdown|signature|zfs'
+```
+
+Then test successive hibernation/restoration cycles from the same desktop session,
+checking its unchanged `/proc/sys/kernel/random/boot_id` and application state.
+Verify the restored kernel reports `Restored authenticated NULL-primary context`,
+the next hibernation succeeds, and the pool stays healthy. These are physical
+acceptance steps, not results established by the disposable VM tests. Do not
+clear or reprovision the physical TPM as part of this check.
 
 ## Independent rescue lifecycle
 
@@ -173,7 +211,7 @@ Install the candidate at a separate path/entry while preserving the known-good
 one. Promote it only after an explicit successful physical boot. Do not refresh
 rescue as a side effect of normal main-loader updates. The candidate/known-good
 publisher and its FAT/OVMF publication test are implemented in zbm-rs. Host pin
-integration is prepared in this configuration, not installed. The exact unsigned production image booted in OVMF,
+integration has staged the candidate, without promotion. The exact unsigned production image booted in OVMF,
 displayed the menu, accepted F2 and powered off directly with F10. No host disks
 were attached, so that run does not certify production ZFS/LUKS access or physical
 boot; the separate 19-scenario UI fixture covers virtual encrypted devices.
@@ -190,8 +228,8 @@ The canonical `boot.loader.zbm-rs.hibernation.cancellationConfig` is derived fro
 the declared physical swap topology even while `hibernation.enable` is false.
 Main resume activation retains that single enable switch; it also selects the
 TPM-patched shared kernel, disables persistent loader diagnostics and enables
-native NixOS resume-before-import. It remains false in this checkout pending
-acceptance. Neither a rescue update nor a configuration build enables it.
+native NixOS resume-before-import. It is enabled for the internal installation and
+disabled for the portable SSD. A rescue update does not change that switch.
 
 Keep a tested bootable copy on a different physical device. Multiple files on
 one ESP share filesystem and disk failure modes. Old rescue can also become

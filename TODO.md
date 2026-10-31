@@ -4,8 +4,9 @@
   in `docs/boot-recovery.md`. Cancellation-only guards, candidate/known-good
   publication, FAT tests and exact-artifact OVMF menu/input checks passed;
   the guarded source pin and build-closure retention are prepared here.
-  Rescue is not installed on the new NVMe ESP. Install a verified baseline and
-  test physical boot before relying on it; keep an external recovery copy.
+  The verified unsigned candidate is staged on the new NVMe ESP as entry `0002`,
+  without changing the default boot or promoting the known-good slot. Test its
+  exact bytes physically before promotion; keep an external recovery copy.
 - [ ] Verify the first physical NVMe boot after restoration, including KDE,
   niri, VPN, browser/VKey and existing credentials. Offline installation,
   standalone raw home restoration and the encrypted-storage VM check passed;
@@ -26,15 +27,17 @@
   experimental extension to Garrett's RFC, not an upstream-approved fix. See
   `nix/patches/hibernation-tpm-7.2.9/README.md` in zbm-rs. The main input advances
   independently of the guarded cancellation-only rescue baseline. The production
-  kernel still needs a full build with this host's public trust certificates;
+  kernel is being built with this host's public trust certificates;
   VM signing artifacts are not production artifacts.
   Remove old generations and stale prepared artifacts after acceptance; intentional
   old-kernel downgrade research is out of scope. See `docs/boot-recovery.md` for
   the fixed architecture and remaining implementation work.
   Preserve resume-before-import ordering and explicit saved-session
   cancellation. Do not disable Lockdown or Secure Boot. The 48 GiB LUKS2 swap
-  remains configured for ordinary paging; hibernation, hybrid sleep and
-  suspend-then-hibernate remain disabled in this configuration.
+  remains configured for ordinary paging and authenticated hibernation on the
+  internal installation. Hybrid sleep and suspend-then-hibernate remain disabled;
+  the portable SSD does not enable hibernation. Default compressed images passed
+  both the repeated-resume interruption VM and the full protected-chain VM.
 - [ ] Investigate Orbit/osquery graceful shutdown: Orbit receives SIGTERM but
   remains alive until systemd kills it. The previous shutdown hit the full
   35-second timeout. Framework now limits `orbit.service` to 10 seconds as a
