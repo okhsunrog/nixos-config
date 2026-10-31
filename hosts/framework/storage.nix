@@ -106,7 +106,8 @@ in
     systemd.sleep.settings.Sleep = lib.mkIf (cfg.swapLuksUuid != null) {
       AllowHibernation = config.boot.loader.zbm-rs.hibernation.enable;
       AllowHybridSleep = false;
-      AllowSuspendThenHibernate = false;
+      AllowSuspendThenHibernate = config.boot.loader.zbm-rs.hibernation.enable;
+      HibernateDelaySec = "2h";
     };
     boot.initrd.availableKernelModules = lib.optionals cfg.portable [
       "uas"

@@ -55,8 +55,11 @@ physical hibernate/resume succeeded on October 31, 19:41–19:43 Moscow time:
 successfully, and the image status returned to `inactive`. ZFS reported all pools
 healthy and no system services were failed. Follow-up driver warnings were
 `spd5118_resume` error -6 and USB evaluate-context warnings for ports 3-9/3-10;
-the affected DIMM temperature sensor remained readable. Repeated physical
-hibernate/resume cycles and explicit cancellation acceptance remain pending.
+the affected DIMM temperature sensor remained readable. A second consecutive
+cycle through the Dux power menu succeeded at 19:52–19:54, with the same boot ID,
+another authenticated NULL-primary context restore, a successful hibernate unit,
+inactive image status and healthy pools. Explicit cancellation and physical
+suspend-then-hibernate acceptance remain pending.
 
 The internal installation enables backend `linux-tpm-signature-v2`, authenticated
 context-handoff protocol 1 and record protocol 2 with the declared LUKS2/ZFS
@@ -94,9 +97,9 @@ The authoritative generic design lives in zbm-rs
 
 The signed profile and rescue guard are implemented. Authenticated RAM restore,
 subsequent hibernation and the complete protected loader chain passed disposable
-VM testing with the experimental backend. The first physical authenticated
-resume passed; repeated physical cycles and cancellation acceptance remain
-pending before treating the whole workflow as accepted.
+VM testing with the experimental backend. Two consecutive physical authenticated
+resumes passed, through the CLI and Dux. Cancellation and suspend-then-hibernate
+acceptance remain pending before treating the whole workflow as accepted.
 Keep Secure Boot and Lockdown enabled.
 
 Full root currently has access to boot/IMA signing keys in `/var/lib/secureboot`.
@@ -187,8 +190,8 @@ kernel/initrd and normalized swap/credential policy, and are checked before
 cloning and handoff, including cold boots. Real PE/IMA/CMS publisher validation
 passed. Backend `linux-tpm-signature-v2` requires context-handoff protocol 1 and
 boot-record protocol 2. This host now has matching owner-signed kernel, target
-and loader artifacts installed and one successful physical authenticated resume.
-Repeated cycles and cancellation still need physical acceptance. The disposable
+and loader artifacts installed and two successful physical authenticated resumes.
+Cancellation and suspend-then-hibernate still need physical acceptance. The disposable
 VM's signed artifacts are not reused.
 
 After the complete hibernation path works and has passed acceptance, remove old
@@ -228,6 +231,32 @@ Verify the restored kernel reports `Restored authenticated NULL-primary context`
 the next hibernation succeeds, and the pool stays healthy. These are physical
 acceptance steps, not results established by the disposable VM tests. Do not
 clear or reprovision the physical TPM as part of this check.
+
+Suspend-then-hibernate uses the same preparation/completion gate on its own
+native systemd service. The internal configuration selects a two-hour timeout;
+ordinary Suspend, lid handling and low-battery policy are unchanged. Request the
+new mode with `systemctl suspend-then-hibernate`, or select “Suspend then
+hibernate” as the suspend behavior in Dux Power & Sleep settings.
+
+For the first physical timed-wake test, shorten only the runtime timeout:
+
+```sh
+sudo install -d /run/systemd/sleep.conf.d
+printf '[Sleep]\nHibernateDelaySec=2min\n' | sudo tee /run/systemd/sleep.conf.d/99-framework-s2h-test.conf >/dev/null
+systemctl suspend-then-hibernate
+```
+
+After restoring the session, remove the override to restore the two-hour policy:
+
+```sh
+sudo rm /run/systemd/sleep.conf.d/99-framework-s2h-test.conf
+journalctl -b -u systemd-suspend-then-hibernate.service
+```
+
+First also check a manual wake before the timeout, then repeat a complete timed
+cycle. The VM harness injects ACPI wake events because its RTC path was unreliable;
+it verifies timer decisions and actual RAM restoration, not the Framework's RTC
+or low-battery wake capability. Do not infer those physical results from VM tests.
 
 ## Independent rescue lifecycle
 
