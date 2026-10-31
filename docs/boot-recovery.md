@@ -47,10 +47,16 @@ Main and candidate now prefer the Niri specialisation for ordinary boot. The
 main loader still prioritises the exact saved-session target. Key-unlock progress
 and broker-reported pool refresh scope are enabled. The kernel was reused and
 all 7410 existing aggregate module signatures were revalidated. Installation did
-not switch or reboot the running session. The latest main EFI and generation 72
-still need physical acceptance; generation 71 previously booted through the main
-loader with Secure Boot and integrity Lockdown. Physical hibernation remains
-unverified.
+not switch or reboot the running session. Generation 72 subsequently booted
+through the main loader with Secure Boot and integrity Lockdown. Its first
+physical hibernate/resume succeeded on October 31, 19:41–19:43 Moscow time:
+`boot_id` remained `50696601-278d-44c4-bfd9-629d9772e9d2`, the kernel logged
+`Restored authenticated NULL-primary context`, the hibernate unit finished
+successfully, and the image status returned to `inactive`. ZFS reported all pools
+healthy and no system services were failed. Follow-up driver warnings were
+`spd5118_resume` error -6 and USB evaluate-context warnings for ports 3-9/3-10;
+the affected DIMM temperature sensor remained readable. Repeated physical
+hibernate/resume cycles and explicit cancellation acceptance remain pending.
 
 The internal installation enables backend `linux-tpm-signature-v2`, authenticated
 context-handoff protocol 1 and record protocol 2 with the declared LUKS2/ZFS
@@ -88,8 +94,9 @@ The authoritative generic design lives in zbm-rs
 
 The signed profile and rescue guard are implemented. Authenticated RAM restore,
 subsequent hibernation and the complete protected loader chain passed disposable
-VM testing with the experimental backend. Physical acceptance remains pending;
-do not enable this policy for normal use until it passes too.
+VM testing with the experimental backend. The first physical authenticated
+resume passed; repeated physical cycles and cancellation acceptance remain
+pending before treating the whole workflow as accepted.
 Keep Secure Boot and Lockdown enabled.
 
 Full root currently has access to boot/IMA signing keys in `/var/lib/secureboot`.
@@ -180,8 +187,9 @@ kernel/initrd and normalized swap/credential policy, and are checked before
 cloning and handoff, including cold boots. Real PE/IMA/CMS publisher validation
 passed. Backend `linux-tpm-signature-v2` requires context-handoff protocol 1 and
 boot-record protocol 2. This host now has matching owner-signed kernel, target
-and loader artifacts installed for the next boot. Physical acceptance is still
-required. The disposable VM's signed artifacts are not reused.
+and loader artifacts installed and one successful physical authenticated resume.
+Repeated cycles and cancellation still need physical acceptance. The disposable
+VM's signed artifacts are not reused.
 
 After the complete hibernation path works and has passed acceptance, remove old
 system generations and their stale prepared artifacts through the standard
