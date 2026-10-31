@@ -4,10 +4,15 @@
 
 The main signed zbm-rs image is installed at `EFI/zbm-rs/zbm-rs.EFI` on the
 internal ESP, PARTUUID `aafa93cb-dbf2-483c-8ca2-cb035104f8b9`. Entry `0001` is
-the current firmware boot entry. `EFI/BOOT/BOOTX64.EFI` retains the earlier
-migration copy; the normal installer updates only its explicitly selected
-`EFI/zbm-rs/zbm-rs.EFI` path. Use entry `0001` for the new protected loader.
-The migration copy is not the tested independent rescue. The independent unsigned
+the current firmware boot entry. The obsolete migration copy at
+`EFI/BOOT/BOOTX64.EFI` was deleted at the owner's request after it was identified
+as the old signed `zbm-rs diagnostic` loader, incompatible with the new protected
+authorization records. Its SHA-256 was
+`3996cbd48195b36974e275eae325be7cf0adb0f3331446eb0a15838243407b30`.
+Deletion verified that exact image and left the main/rescue hashes and firmware
+entries unchanged. The normal installer updates only its explicitly selected
+`EFI/zbm-rs/zbm-rs.EFI` path and does not recreate this fallback copy.
+Use entry `0001` for the protected loader. The independent unsigned
 rescue candidate is now staged at `EFI/zbm-rs/rescue-candidate.EFI`, entry `0002`.
 Its SHA-256 is
 `752790bff27fce1412b63441d3f35b335fc9f372dddc8ae55de3621691345a8f`.
@@ -35,9 +40,12 @@ is generation **71**, with these prepared and authorized closures:
 The main EFI SHA-256 is
 `e3d5db9c8f2997b3e64a2c07ff36c9587038f5f8ed464e956cba088b3b9b3b4a`.
 Readback from the ESP and owner-certificate PE verification passed; the rescue
-candidate hash and boot order remained unchanged. The running desktop/kernel
-were not switched or rebooted. Physical boot and hibernation acceptance remain
-pending.
+candidate hash and boot order remained unchanged. Installation did not switch or
+automatically reboot the running desktop/kernel. A subsequent physical boot
+through entry `0001` into generation 71 was confirmed with Secure Boot enabled,
+SetupMode disabled and integrity Lockdown active. Physical hibernation and the
+actual unsigned rescue boot still require acceptance; the photographed diagnostic
+loader was not the rescue candidate.
 
 All 7410 aggregate modules were signed and verified against the exact owner
 kernel and public certificate. Both target bundles passed independent exact-byte
