@@ -260,9 +260,21 @@ clear or reprovision the physical TPM as part of this check.
 
 Suspend-then-hibernate uses the same preparation/completion gate on its own
 native systemd service. The internal configuration selects a two-hour timeout;
-ordinary Suspend, lid handling and low-battery policy are unchanged. Request the
-new mode with `systemctl suspend-then-hibernate`, or select “Suspend then
-hibernate” as the suspend behavior in Dux Power & Sleep settings.
+closing the lid requests suspend-then-hibernate unless logind considers the
+machine docked (including multiple connected displays), when the lid is ignored.
+The portable repair system retains ordinary suspend. UPower uses percentage
+thresholds of 20% low, 10% critical and 5% action; the internal installation
+explicitly selects Hibernate as its critical action.
+
+Request the new mode with `systemctl suspend-then-hibernate`. Dux's “Suspend
+behavior” setting applies only to idle sleep, separately for AC and battery.
+To use the mode from its Suspend menu button, set that button's custom command
+to `systemctl suspend-then-hibernate`. Enable “Lock before suspend” to lock
+before sleep, including hibernation and requests arriving through logind.
+These Dux preferences are user settings, not declarations in this configuration.
+Plain `systemctl suspend` remains ordinary suspend. In suspend-then-hibernate,
+systemd also handles low-battery wake/hibernation independently of UPower;
+its firmware-dependent wake path still needs physical acceptance.
 
 For the first physical timed-wake test, shorten only the runtime timeout:
 
