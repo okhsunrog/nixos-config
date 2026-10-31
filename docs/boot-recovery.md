@@ -4,8 +4,10 @@
 
 The main signed zbm-rs image is installed at `EFI/zbm-rs/zbm-rs.EFI` on the
 internal ESP, PARTUUID `aafa93cb-dbf2-483c-8ca2-cb035104f8b9`. Entry `0001` is
-the current firmware boot entry. `EFI/BOOT/BOOTX64.EFI` contains the same main
-image; it is not an independent recovery version. The independent unsigned
+the current firmware boot entry. `EFI/BOOT/BOOTX64.EFI` retains the earlier
+migration copy; the normal installer updates only its explicitly selected
+`EFI/zbm-rs/zbm-rs.EFI` path. Use entry `0001` for the new protected loader.
+The migration copy is not the tested independent rescue. The independent unsigned
 rescue candidate is now staged at `EFI/zbm-rs/rescue-candidate.EFI`, entry `0002`.
 Its SHA-256 is
 `752790bff27fce1412b63441d3f35b335fc9f372dddc8ae55de3621691345a8f`.
@@ -13,7 +15,7 @@ The existing boot order still starts with `0001`; no BootNext was set. The
 candidate has not been physically accepted or promoted to `rescue.EFI`.
 
 The prepared configuration pins the main source to
-`911e6b06457cc1ba6a6df84260cf9cb361d72eaf`, with the VM-tested experimental
+`1123d7307abd0a1eb48433ac68918f2965ba7cca`, with the VM-tested experimental
 authenticated-resume backend. The independently retained rescue stays at
 `dc82575eb2d0b9cd9e9db1dafc4172838db8b585`, the cancellation-only guarded
 baseline which rejects enforced resume. The rescue keeps its own Nixpkgs, kernel and ZFS. Normal
@@ -24,12 +26,32 @@ retain the built plan, public image inputs, manifest and closure too.
 
 The configuration enables protected hibernation on the internal NVMe installation;
 the portable SSD retains ordinary paging without hibernation. The owner-signed
-production build is in progress. The running kernel and main EFI image have not
-yet been replaced. The rescue candidate is installed separately as described above.
+production build and `boot` installation completed. The selected system profile
+is generation **71**, with these prepared and authorized closures:
+
+- KDE: `/nix/store/97ydfk12kgafkidd46a5d43r2k86b4kd-nixos-system-nova-nixos-26.11.20261020.02c087f`.
+- Niri: `/nix/store/gsh283lv5a3jvbgky44xzdp2wjcnvil6-nixos-system-nova-nixos-niri-26.11.20261020.02c087f`.
+
+The main EFI SHA-256 is
+`e3d5db9c8f2997b3e64a2c07ff36c9587038f5f8ed464e956cba088b3b9b3b4a`.
+Readback from the ESP and owner-certificate PE verification passed; the rescue
+candidate hash and boot order remained unchanged. The running desktop/kernel
+were not switched or rebooted. Physical boot and hibernation acceptance remain
+pending.
+
+All 7410 aggregate modules were signed and verified against the exact owner
+kernel and public certificate. Both target bundles passed independent exact-byte
+PE/IMA/CMS checks and protected native-resume contract validation, including
+ordered arguments, kernel/secret-appended initramfs, resume policy and import
+dependencies. The production loader is `enforce`, has no test SSH, disables ESP
+diagnostics and uses the same protected kernel. Its signed EFI manifest digest
+now describes the final published bytes; the stale unsigned-digest defect was
+fixed in the pinned zbm-rs source and regression-checked with disposable keys.
 
 Source validation on October 31 passed after the main input update: Nix formatting,
 ShellCheck, `ssd-config` and the disposable encrypted ZFS/LUKS storage-boot VM.
-Lockfile comparison confirmed that only the main zbm-rs node changed. KDE and
+Lockfile comparison confirmed that only the main zbm-rs and signed-modules nodes
+changed. KDE and
 niri retain the early kexec prohibition; the rescue policy remains `cancel-only`.
 Evaluation with the hibernation option enabled selects backend
 `linux-tpm-signature-v2`, context-handoff protocol 1 and record protocol 2 with
@@ -154,9 +176,9 @@ are implemented and passed the complete protected-chain VM test. They bind the a
 kernel/initrd and normalized swap/credential policy, and are checked before
 cloning and handoff, including cold boots. Real PE/IMA/CMS publisher validation
 passed. Backend `linux-tpm-signature-v2` requires context-handoff protocol 1 and
-boot-record protocol 2. This host still needs a matching owner-signed kernel,
-target and loader build using its public trust certificates and physical
-acceptance. The disposable VM's signed artifacts are not reused.
+boot-record protocol 2. This host now has matching owner-signed kernel, target
+and loader artifacts installed for the next boot. Physical acceptance is still
+required. The disposable VM's signed artifacts are not reused.
 
 After the complete hibernation path works and has passed acceptance, remove old
 system generations and their stale prepared artifacts through the standard
@@ -226,10 +248,16 @@ error. Main-loader rebuilds do not invoke this script.
 
 The canonical `boot.loader.zbm-rs.hibernation.cancellationConfig` is derived from
 the declared physical swap topology even while `hibernation.enable` is false.
-Main resume activation retains that single enable switch; it also selects the
-TPM-patched shared kernel, disables persistent loader diagnostics and enables
+Main resume activation retains that single enable switch; it disables persistent
+loader diagnostics and enables
 native NixOS resume-before-import. It is enabled for the internal installation and
 disabled for the portable SSD. A rescue update does not change that switch.
+The Framework internal and portable profiles always share the same TPM-patched
+kernel and aggregate signed module input; disabling resume does not select an
+incompatible second kernel. Configuration checks cover that identity explicitly.
+The portable profile still disables hibernation. The separate rescue keeps its
+own independently pinned kernel/package set. The disposable encrypted-storage
+boot VM passed again after this correction (78.15 seconds).
 
 Keep a tested bootable copy on a different physical device. Multiple files on
 one ESP share filesystem and disk failure modes. Old rescue can also become

@@ -20,7 +20,9 @@ let
   kernelPackages = import "${zbm-rs}/nix/security-kernel.nix" {
     pkgs = bootPkgs;
     kernelPackages = bootPkgs.linuxPackages_latest;
-    hibernationTpmSignature = config.boot.loader.zbm-rs.hibernation.enable;
+    # Internal and portable installations share one signed module input. Keep
+    # their kernel identical even when the portable profile disables resume.
+    hibernationTpmSignature = true;
     trustedCertificates = [
       (builtins.path {
         path = ./public/db.pem;

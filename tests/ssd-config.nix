@@ -38,6 +38,11 @@ assert !(cfg.fileSystems ? "/home/okhsunrog/Nextcloud");
 assert cfg.swapDevices == [ ];
 assert !cfg.boot.loader.zbm-rs.hibernation.enable;
 assert !niri.boot.loader.zbm-rs.hibernation.enable;
+assert
+  cfg.boot.kernelPackages.kernel.outPath == framework.config.boot.kernelPackages.kernel.outPath;
+assert
+  cfg.system.build.unsignedFrameworkModules.outPath
+  == framework.config.system.build.unsignedFrameworkModules.outPath;
 assert cfg.boot.initrd.luks.devices == { };
 assert !cfg.services.arctern.enable && !cfg.systemd.services.arctern.enable;
 assert cfg.framework.environments.entries.kde.backup == "none";

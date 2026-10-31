@@ -56,7 +56,7 @@
       url = "github:niri-wm/niri/fcbc971cf49a987b1e8d5ff1d64da6b1f61a1787";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    zbm-rs.url = "github:okhsunrog/zbm-rs/911e6b06457cc1ba6a6df84260cf9cb361d72eaf";
+    zbm-rs.url = "github:okhsunrog/zbm-rs/1123d7307abd0a1eb48433ac68918f2965ba7cca";
     # Independently pinned cancellation-only baseline; ordinary updates to the
     # main loader must not move this input or replace the known-good EFI slot.
     zbm-rescue.url = "github:okhsunrog/zbm-rs/dc82575eb2d0b9cd9e9db1dafc4172838db8b585";

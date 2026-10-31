@@ -1,6 +1,6 @@
 # TODO
 
-- [ ] Install and physically validate the independent rescue lifecycle described
+- [ ] Physically validate and promote the independent rescue lifecycle described
   in `docs/boot-recovery.md`. Cancellation-only guards, candidate/known-good
   publication, FAT tests and exact-artifact OVMF menu/input checks passed;
   the guarded source pin and build-closure retention are prepared here.
@@ -11,7 +11,7 @@
   niri, VPN, browser/VKey and existing credentials. Offline installation,
   standalone raw home restoration and the encrypted-storage VM check passed;
   see `docs/ssd-migration.md`.
-- [ ] Build, owner-sign and physically validate authenticated hibernation under
+- [ ] Physically validate authenticated hibernation under
   integrity Lockdown before enabling normal use on the laptop. The experimental
   Linux 7.2.9/ZFS 2.4.4 build through patch 0028 passed disposable VM acceptance:
   CRB/SHA-256 and TIS/dual-bank RAM restoration, creation of the next signed image,
@@ -27,8 +27,13 @@
   experimental extension to Garrett's RFC, not an upstream-approved fix. See
   `nix/patches/hibernation-tpm-7.2.9/README.md` in zbm-rs. The main input advances
   independently of the guarded cancellation-only rescue baseline. The production
-  kernel is being built with this host's public trust certificates;
-  VM signing artifacts are not production artifacts.
+  kernel and matching ZFS are built with this host's public trust certificates.
+  All 7410 modules are signed/verified; generation 71, both KDE/Niri protected
+  authorizations and the main EFI are installed for the next boot. Exact-byte
+  PE/IMA/CMS, native resume contract and ESP readback checks passed. No physical
+  reboot/hibernation has been performed. VM signing artifacts are not production
+  artifacts. Internal and portable profiles share the signed kernel/module input;
+  the portable profile still disables hibernation.
   Remove old generations and stale prepared artifacts after acceptance; intentional
   old-kernel downgrade research is out of scope. See `docs/boot-recovery.md` for
   the fixed architecture and remaining implementation work.
