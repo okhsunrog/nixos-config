@@ -8,14 +8,14 @@ Three independently published EFI files are installed:
 | Firmware entry | Role | EFI path | Source |
 | --- | --- | --- | --- |
 | `0001`, `zbm-rs` | signed main loader, enforce | `EFI/zbm-rs/zbm-rs.EFI` | `9e51e993c58899a185c3b587ff9ba707604c67e7` |
-| `0000`, `zbm-rs (rescue)` | physically accepted, unsigned known-good | `EFI/zbm-rs/rescue.EFI` | `dc82575eb2d0b9cd9e9db1dafc4172838db8b585` |
-| `0002`, `zbm-rs (rescue candidate)` | updated unsigned candidate, awaiting physical acceptance | `EFI/zbm-rs/rescue-candidate.EFI` | `9e51e993c58899a185c3b587ff9ba707604c67e7` |
+| `0000`, `zbm-rs (rescue)` | physically accepted, unsigned known-good | `EFI/zbm-rs/rescue.EFI` | `9e51e993c58899a185c3b587ff9ba707604c67e7` |
+| `0002`, `zbm-rs (rescue candidate)` | tested candidate, now also promoted to known-good | `EFI/zbm-rs/rescue-candidate.EFI` | `9e51e993c58899a185c3b587ff9ba707604c67e7` |
 
 SHA-256 readback from all three ESP files passed. The main PE signature was
 verified against the owner certificate; both rescue images were verified unsigned:
 
 - Main: `03a763d6909dbd7744eaffc49c9771a5f58eeb00b8b45487638f3e2ddab3f2a9`.
-- Known-good rescue: `752790bff27fce1412b63441d3f35b335fc9f372dddc8ae55de3621691345a8f`.
+- Known-good rescue: `c681020f3cfb5ee474ef11ff0b1087a7f2ec7df8a285ff058c3e7d4e0ba9df1b`.
 - Candidate: `c681020f3cfb5ee474ef11ff0b1087a7f2ec7df8a285ff058c3e7d4e0ba9df1b`.
 
 The owner physically verified rejection of the old candidate with Secure Boot
@@ -23,8 +23,13 @@ on, its startup with Secure Boot off, and subsequently booted Niri through it
 (`BootCurrent=0002`). With explicit owner approval, that exact candidate was
 promoted to known-good before updating the candidate slot. The updated candidate
 passed exact-production-byte OVMF menu, F2 and direct F10 poweroff checks. No host
-disks were attached. Physical acceptance of this new candidate is still pending;
-it was not promoted automatically. Both rescue slots remain cancellation-only.
+disks were attached. The owner subsequently confirmed that the updated candidate
+was fully functional and booted Niri by default. Following the agreed lifecycle,
+that exact `c681020f…` artifact was promoted with hash/receipt verification.
+Known-good and candidate currently contain identical tested EFI bytes; future
+candidate staging still leaves known-good untouched. Both rescue slots remain
+cancellation-only. Physical hibernation acceptance through the main loader remains
+separate from this rescue acceptance.
 
 BootOrder is `0001,2001,2002,2003,0002,0000`; the protected main stays first.
 No BootNext was set. The obsolete signed migration fallback at
