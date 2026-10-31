@@ -10,25 +10,24 @@
   niri, VPN, browser/VKey and existing credentials. Offline installation,
   standalone raw home restoration and the encrypted-storage VM check passed;
   see `docs/ssd-migration.md`.
-- [ ] Complete authenticated hibernation under integrity Lockdown before
-  enabling it on the laptop. The zbm-rs LUKS2 guard and shared ZFS-unlock
-  credential flow are implemented; an ordinary-kernel VM restored actual RAM
-  through encrypted swap before importing ZFS. This does not validate signed
-  hibernation under Lockdown. An opt-in Linux 7.2.9 port of Matthew Garrett's
-  17-patch TPM-signature RFC passed full kernel/ZFS compilation in zbm-rs; VM
-  runtime validation remains incomplete. EFI INITRD-table and moving E820-map
-  fixes passed full rebuilds and handoff checks. One authenticated CRB/SHA-256
-  RAM restore passed, but the next hibernation exposed a stale TPM NULL-primary
-  context. Patch 0028 adds a fresh AK-attested context handoff; its affected
-  objects compile and the full build/repeat-cycle checks are pending. See
-  `nix/patches/hibernation-tpm-7.2.9/README.md` there. Complete EFI/TPM and kexec
-  VM coverage for the shared patched loader/target kernel, image-tampering
-  rejection, enforced loader-policy integration
-  and physical testing before enabling normal use here. The source pins currently
-  select the published guarded baseline, not the unaccepted experimental kernel.
-  Boot-record v2 durable-attempt tracking passed ordinary RAM restoration;
-  validate consumed-image failure/reboot and TPM-unavailable repair scenarios
-  with the authenticated kernel too. Test SHA-256-only banks as on this laptop.
+- [ ] Build, owner-sign and physically validate authenticated hibernation under
+  integrity Lockdown before enabling normal use on the laptop. The experimental
+  Linux 7.2.9/ZFS 2.4.4 build through patch 0028 passed disposable VM acceptance:
+  CRB/SHA-256 and TIS/dual-bank RAM restoration, creation of the next signed image,
+  and the complete Secure Boot/enforced zbm-rs/PE/IMA/CMS target chain. Modified
+  signature trailers, RAM-payload corruption and guest TPM clear were rejected
+  before pool import; consumed attempts remained protected on the following boot.
+  The CRB/SHA-256 interruption run restored the same RAM session three times,
+  including retry after unavailable TPM, without losing its original boot ID.
+  Empty-swap repair boot without TPM also passed, retaining integrity Lockdown
+  and ordinary paging, with the explicit `systemd.tpm2_wait=0` repair argument.
+  Patch 0028 authenticates the fresh NULL-primary context with the original
+  provenance AK, fixing subsequent hibernation after RAM restore. It is a local
+  experimental extension to Garrett's RFC, not an upstream-approved fix. See
+  `nix/patches/hibernation-tpm-7.2.9/README.md` in zbm-rs. The main input advances
+  independently of the guarded cancellation-only rescue baseline. The production
+  kernel still needs a full build with this host's public trust certificates;
+  VM signing artifacts are not production artifacts.
   Remove old generations and stale prepared artifacts after acceptance; intentional
   old-kernel downgrade research is out of scope. See `docs/boot-recovery.md` for
   the fixed architecture and remaining implementation work.

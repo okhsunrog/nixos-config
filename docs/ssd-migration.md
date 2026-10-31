@@ -118,17 +118,19 @@ successfully. The NVMe configuration unlocks it in the initramfs after copying
 the runtime secrets, then activates `/dev/mapper/nvme-swap` as ordinary swap.
 The isolated SSD configuration does not unlock or activate this device.
 
-Hibernation is not enabled: the current zbm-rs guard accepts only plain swap
-partitions. LUKS2 support must cover the loader's pre-import image detection,
-cancellation and target-initramfs resume gate together. Using stock resume
-would bypass that protection. See `TODO.md`; suspend-to-RAM is unaffected.
+Hibernation was kept disabled during migration. zbm-rs subsequently gained
+LUKS2 pre-import image detection, verified cancellation and the target-initramfs
+resume gate; stock resume must not bypass that protection. See
+`docs/boot-recovery.md` and `TODO.md` for current acceptance. Suspend-to-RAM is
+unaffected.
 
-There is a second blocker: the current signed kernel reports
+The signed migration kernel also reports
 `none [integrity] confidentiality` in `/sys/kernel/security/lockdown`.
 Upstream Linux checks `LOCKDOWN_HIBERNATION` in `hibernation_available()`
 (`kernel/power/hibernate.c`). Extending the LUKS2 guard alone does not resolve
-that policy. Disabling Lockdown/Secure Boot or changing kernel image trust
-requires a separate security decision; neither was weakened for migration.
+that policy. The experimental TPM-authenticated backport has since passed VM
+acceptance with integrity Lockdown; it still needs an owner-signed host build and
+physical acceptance. Lockdown and Secure Boot were not weakened for migration.
 
 ## Dataset restoration completed, 2026-10-30
 

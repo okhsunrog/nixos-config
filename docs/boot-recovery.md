@@ -8,10 +8,11 @@ the current firmware boot entry. `EFI/BOOT/BOOTX64.EFI` contains the same main
 image; it is not an independent recovery version. After the NVMe migration,
 the new ESP has no rescue image or separate rescue firmware entry.
 
-The prepared configuration now pins both the main source and the independently
-retained rescue source to `dc82575eb2d0b9cd9e9db1dafc4172838db8b585`.
-This published baseline has the cancellation-only rescue guard and still rejects
-enforced resume. The rescue keeps its own Nixpkgs, kernel and ZFS. Normal
+The prepared configuration pins the main source to
+`208c5349a4d699084023b46a363785ed883108c8`, with the VM-tested experimental
+authenticated-resume backend. The independently retained rescue stays at
+`dc82575eb2d0b9cd9e9db1dafc4172838db8b585`, the cancellation-only guarded
+baseline which rejects enforced resume. The rescue keeps its own Nixpkgs, kernel and ZFS. Normal
 `rebuild-framework.sh` never installs or updates it. The explicit rescue updater
 stages a candidate; promotion requires the exact tested hash and receipt, as
 described below. The source pin is not by itself a pin of the complete artifact:
@@ -20,6 +21,15 @@ retain the built plan, public image inputs, manifest and closure too.
 These are source-configuration changes, not an installed EFI update. Host
 hibernation remains disabled. No rescue installation or firmware changes were
 performed during this work.
+
+Source validation on October 31 passed after the main input update: Nix formatting,
+ShellCheck, `ssd-config` and the disposable encrypted ZFS/LUKS storage-boot VM.
+Lockfile comparison confirmed that only the main zbm-rs node changed. KDE and
+niri retain the early kexec prohibition; the rescue policy remains `cancel-only`.
+Evaluation with the hibernation option enabled selects backend
+`linux-tpm-signature-v2`, context-handoff protocol 1 and record protocol 2 with
+the configured LUKS2/ZFS-unlock topology. That evaluation neither builds nor
+installs the production kernel; the checked-in option remains disabled.
 
 ## Agreed protected hibernation direction
 
@@ -46,9 +56,10 @@ The authoritative generic design lives in zbm-rs
   the menu or cold-boot the exact selected target. Destructive continuations
   require confirmation; poweroff preserves the image without a prompt.
 
-The signed profile and rescue guard are implemented; authenticated repeat cycles
-and the complete protected loader chain are still under validation. Do not
-enable this policy for normal use until VM and physical acceptance have passed.
+The signed profile and rescue guard are implemented. Authenticated RAM restore,
+subsequent hibernation and the complete protected loader chain passed disposable
+VM testing with the experimental backend. Physical acceptance remains pending;
+do not enable this policy for normal use until it passes too.
 Keep Secure Boot and Lockdown enabled.
 
 Full root currently has access to boot/IMA signing keys in `/var/lib/secureboot`.
@@ -90,16 +101,20 @@ the target kexec prohibition. Its second hibernation failed because restored
 RAM retained the previous TPM boot's NULL-primary context. Experimental patch
 0028 adds an authenticated one-shot context handoff through reserved EFI memory;
 the original provenance AK must sign a fresh nonce and the NULL-creation audit.
-The signed image binds the old NULL identity and exact handoff address. Affected
-objects compile; full build and repeat-cycle runtime acceptance are pending.
+The signed image binds the old NULL identity and exact handoff address. Its full
+kernel/ZFS build passed; CRB/SHA-256 and TIS/dual-bank VMs restored original RAM
+and created the next signed image successfully.
 Backend v2 is a local extension, not an upstream-approved fix.
 
-Separate negative-only runs rejected image-signature tampering and a cleared
-guest TPM before pool import, then required cancellation on the next boot.
-Unavailable-TPM, repeated cycles and the complete enforced loader integration
-remain acceptance gates. This Framework currently uses CRB. The installed host
-kernel/loader are unchanged; source pins have advanced to the guarded baseline
-above, with hibernation still disabled.
+After successful restoration and the next hibernation, separate runs rejected
+image-signature tampering, a changed RAM-payload byte with its original signature
+trailer intact, and a cleared guest TPM before pool import. Consumed images still
+required cancellation on the following boot. The complete OVMF Secure Boot →
+enforced zbm-rs → PE/IMA/CMS-authorized NixOS chain restored RAM and created the
+next image. It also checked missing/wrong signed profiles, F10 preserving swap,
+confirmed discard-only staying in the menu and cold boot after cancellation.
+This Framework currently uses CRB. The installed host kernel/loader are unchanged
+and hibernation remains disabled.
 
 Read-only hardware checks confirm that this Framework exposes only the SHA-256
 PCR bank and records ExitBootServices invocation/success events in PCR5. These
@@ -114,12 +129,26 @@ negative-only runs also passed with the authenticated kernel. A verified empty s
 for repair when TPM-backed hibernation is unavailable; a saved or incomplete
 session must still be cancelled explicitly first.
 
+The patch-0028 CRB/SHA-256 interruption test restored one RAM session three
+times. A deliberately unavailable guest TPM stopped resume before pool import
+and left the image intact; restoring the exact clean initramfs/TPM allowed retry,
+the next hibernation and the third restoration. The original boot ID, RAM-only
+data, healthy pool and early kexec prohibition survived; the finish hook cleared
+the durable attempt record.
+
+Empty-swap repair without TPM also passed with integrity Lockdown and ordinary
+paging. This explicit repair scenario uses `systemd.tpm2_wait=0` so systemd does
+not wait for a firmware-advertised device that the fixture deliberately unbound.
+It does not waive TPM/image verification when a saved session exists.
+
 The signed BootAuthorization v2 profile and trusted Nix build-contract validator
-are implemented in the working zbm-rs tree. They bind the actual approved
+are implemented and passed the complete protected-chain VM test. They bind the actual approved
 kernel/initrd and normalized swap/credential policy, and are checked before
 cloning and handoff, including cold boots. Real PE/IMA/CMS publisher validation
-passed. This does not enable enforced resume yet: the authenticated RAM cycle
-and complete protected-loader VM acceptance are still required.
+passed. Backend `linux-tpm-signature-v2` requires context-handoff protocol 1 and
+boot-record protocol 2. This host still needs a matching owner-signed kernel,
+target and loader build using its public trust certificates, rescue installation
+and physical acceptance. The disposable VM's signed artifacts are not reused.
 
 After the complete hibernation path works and has passed acceptance, remove old
 system generations and their stale prepared artifacts through the standard
