@@ -1,0 +1,65 @@
+--- a/scripts/gtk.sh
++++ b/scripts/gtk.sh
+@@ -12,7 +12,8 @@
+ 	exit 1
+ fi
+ 
+-USER_DATA_THEMES="${XDG_DATA_HOME:-$HOME/.local/share}/themes"
++# Scope generated themes without changing the data home of launched apps.
++USER_DATA_THEMES="${DMS_GTK_DATA_HOME:-${XDG_DATA_HOME:-$HOME/.local/share}}/themes"
+ 
+ # System theme roots come from XDG_DATA_DIRS so NixOS profiles and
+ # /run/current-system are found, not just /usr/share.
+@@ -21,7 +22,8 @@
+ 	local dirs="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+ 	local d
+ 	for d in $dirs; do
+-		[ -n "$d" ] && echo "${d%/}/themes"
++		# Never treat a generated copy as the package source.
++		[ -n "$d" ] && [ "${d%/}/themes" != "$USER_DATA_THEMES" ] && echo "${d%/}/themes"
+ 	done
+ }
+ 
+@@ -42,7 +44,7 @@
+ 	[ "$variant" == "dark" ] && name="-$variant"
+ 
+ 	local candidates=(
+-		"$USER_DATA_THEMES/adw-gtk3${name}/gtk-3.0"
++		"$USER_DATA_THEMES/${DMS_GTK_THEME_PREFIX:-}adw-gtk3${name}/gtk-3.0"
+ 		"$HOME/.themes/adw-gtk3${name}/gtk-3.0"
+ 	)
+ 	local root
+@@ -86,7 +88,7 @@
+ 	for variant in light dark; do
+ 		name=""
+ 		[ "$variant" == "dark" ] && name="-$variant"
+-		dest="$USER_DATA_THEMES/adw-gtk3${name}"
++		dest="$USER_DATA_THEMES/${DMS_GTK_THEME_PREFIX:-}adw-gtk3${name}"
+ 		marker="$dest/.dms-copy"
+ 
+ 		if [ -d "$dest/gtk-3.0" ]; then
+@@ -347,6 +349,13 @@
+ 
+ case "$MODE" in
+ 	patch)
++		# Explicit session policy also covers an already-enabled GTK profile
++		# whose private resource directory has not been populated yet.
++		if [ "${DMS_MANAGE_GTK:-0}" = "1" ]; then
++			mkdir -p "$CONFIG_DIR/gtk-3.0" "$CONFIG_DIR/gtk-4.0"
++			apply_gtk3_colors "$CONFIG_DIR"
++			apply_gtk4_colors "$CONFIG_DIR"
++		fi
+ 		# Only refresh themes the user opted into via 'apply'
+ 		if ! dms_managed_css "$CONFIG_DIR/gtk-4.0/gtk.css"; then
+ 			echo "DMS GTK theming is not applied, skipping patch"
+--- a/Common/Theme.qml
++++ b/Common/Theme.qml
+@@ -2111,7 +2111,7 @@
+ 
+     function refreshGtkTheme() {
+         const isLight = (typeof SessionData !== "undefined" && SessionData.isLightMode);
+-        const theme = isLight ? "adw-gtk3" : "adw-gtk3-dark";
++        const theme = (Quickshell.env("DMS_GTK_THEME_PREFIX") || "") + (isLight ? "adw-gtk3" : "adw-gtk3-dark");
+         const schema = "org.gnome.desktop.interface";
+         const key = "gtk-theme";
+         // Same-polarity built-in intermediate: "" resolves to light Adwaita and

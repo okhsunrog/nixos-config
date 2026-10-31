@@ -17,8 +17,10 @@
   programs.niri.useNautilus = false;
   environment.sessionVariables = {
     TERMINAL = "rio";
-    QT_QPA_PLATFORMTHEME = "gtk3";
-    QT_QPA_PLATFORMTHEME_QT6 = "gtk3";
+    QT_QPA_PLATFORMTHEME = "qtengine";
+    QT_QPA_PLATFORMTHEME_QT6 = "qtengine";
+    # Only this specialisation discovers Dux's modified GTK theme resources.
+    XDG_DATA_DIRS = lib.mkBefore [ "/home/okhsunrog/.local/share/niri" ];
     XCURSOR_THEME = "Bibata-Modern-Ice";
     XCURSOR_SIZE = "24";
   };
@@ -81,6 +83,9 @@
   security.polkit.enable = true;
   # TuneD already provides the power-profiles D-Bus API and UPower on this host.
   environment.systemPackages = [
+    (import ../../../packages/qtengine.nix { inherit pkgs; })
+    pkgs.kdePackages.breeze
+    pkgs.kdePackages.breeze.qt5
     pkgs.kdePackages.kwalletmanager
     pkgs.xwayland-satellite
   ];

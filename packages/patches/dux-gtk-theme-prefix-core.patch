@@ -1,0 +1,26 @@
+--- a/internal/matugen/matugen.go
++++ b/internal/matugen/matugen.go
+@@ -89,9 +89,9 @@
+ func (c *ColorMode) GTKTheme() string {
+ 	switch *c {
+ 	case ColorModeDark:
+-		return "adw-gtk3-dark"
++		return os.Getenv("DMS_GTK_THEME_PREFIX") + "adw-gtk3-dark"
+ 	default:
+-		return "adw-gtk3"
++		return os.Getenv("DMS_GTK_THEME_PREFIX") + "adw-gtk3"
+ 	}
+ }
+ 
+@@ -1448,6 +1448,11 @@
+ 		filepath.Join("/usr/share/themes", theme),
+ 		filepath.Join("/usr/local/share/themes", theme),
+ 	}
++	for _, dir := range filepath.SplitList(os.Getenv("XDG_DATA_DIRS")) {
++		if dir != "" {
++			candidates = append(candidates, filepath.Join(dir, "themes", theme))
++		}
++	}
+ 	for _, dir := range candidates {
+ 		if info, err := os.Stat(dir); err == nil && info.IsDir() {
+ 			return true

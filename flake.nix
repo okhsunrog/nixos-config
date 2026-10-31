@@ -208,6 +208,10 @@
           dms =
             self.nixosConfigurations.framework.config.specialisation.niri.configuration.home-manager.users.okhsunrog.programs.dank-material-shell.package;
         };
+        dux-theming = import ./tests/dux-theming.nix {
+          inherit pkgs;
+          framework = self.nixosConfigurations.framework;
+        };
         niri-capture-config = import ./tests/niri-capture-config.nix {
           inherit pkgs;
           niri = self.packages.${system}.niri;

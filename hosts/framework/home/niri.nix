@@ -23,8 +23,8 @@ let
         "options \"grp:caps_toggle\""
         ''
           environment {
-            QT_QPA_PLATFORMTHEME "gtk3"
-            QT_QPA_PLATFORMTHEME_QT6 "gtk3"
+            QT_QPA_PLATFORMTHEME "qtengine"
+            QT_QPA_PLATFORMTHEME_QT6 "qtengine"
             XCURSOR_THEME "Bibata-Modern-Ice"
             XCURSOR_SIZE "24"
         ''
@@ -77,8 +77,32 @@ in
     enableAudioWavelength = true;
     # Events are supplied by Dux Calendar; omit the legacy khal backend.
     enableCalendarEvents = false;
-    # GUI settings and session state remain writable in the isolated home.
+    # GUI settings and session state remain writable in the shared home.
   };
+  systemd.user.services.dms.Service.Environment = [
+    "QT_QPA_PLATFORMTHEME=qtengine"
+    "QT_QPA_PLATFORMTHEME_QT6=qtengine"
+    "DMS_GTK_DATA_HOME=${config.home.homeDirectory}/.local/share/niri"
+    "DMS_GTK_THEME_PREFIX=Dux-"
+    "DMS_MANAGE_GTK=1"
+  ];
+  # Seed a writable plugin configuration. Dux subsequently owns colorScheme
+  # and iconTheme; other choices remain editable and survive rebuilds.
+  home.activation.duxQtDefaults = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if [ ! -e "$HOME/.config/qtengine/config.json" ]; then
+      run ${pkgs.coreutils}/bin/mkdir -p "$HOME/.config/qtengine"
+      run ${pkgs.coreutils}/bin/install -m 0644 ${
+        pkgs.writeText "niri-qtengine.json" (
+          builtins.toJSON {
+            theme = {
+              style = "breeze";
+              colorScheme = "${config.home.homeDirectory}/.local/share/color-schemes/DankMatugen.colors";
+            };
+          }
+        )
+      } "$HOME/.config/qtengine/config.json"
+    fi
+  '';
   programs.dank-calendar = {
     enable = true;
     systemd.enable = true;

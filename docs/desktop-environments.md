@@ -52,6 +52,41 @@ variables are selected by the Niri system/session configuration, without
 changing the shared default cursor or shell startup files. The Niri config
 retains its writable generated includes and GUI preferences.
 
+## Independent application themes
+
+In the Niri specialisation Dux owns GTK and Qt colors. Both Qt5 and Qt6 load
+`qtengine`, built from the same pinned source with separate major-version
+dependencies. Dux points its writable `~/.config/qtengine/config.json` at the
+generated `DankMatugen.colors` and updates it on theme changes. The plugin
+supplies both the Qt palette and KDE's per-process color-scheme property;
+`~/.config/kdeglobals` remains Plasma's configuration. Applications should use
+their default/system color scheme; Kate's editor can follow it automatically.
+
+Dux's GTK script is configured to keep its modified adw-gtk3 copies under
+`~/.local/share/niri/themes/Dux-adw-gtk3{,-dark}`, rather than shadowing themes in the shared
+`~/.local/share/themes`. Only Niri prepends that resource directory to
+`XDG_DATA_DIRS`. The `Dux-` name prefix also prevents existing shared adw-gtk3
+copies from winning GTK's user-theme lookup. `DMS_MANAGE_GTK=1` explicitly enables the GTK integration on
+the first generated palette; the normal Dux theme-generation callback applies
+later changes. The four GTK configuration files and six dconf appearance keys
+still use the existing prepared desktop profiles. Bookmarks stay shared.
+
+Qt platform variables and these Dux controls are confined to Niri. The shared
+`XDG_CONFIG_HOME` and `XDG_DATA_HOME` are not redirected, and no global
+`environment.d` override is installed. KDE keeps its native Qt integration and
+its saved GTK appearance. The `dux-theming` check exercises both real Qt
+plugins, live palette changes, KDE color-scheme handling and GTK resource
+isolation; desktop-profile roundtrips are covered by `environments`.
+
+Physical Niri validation on October 31 confirmed that Qt5/Qt6 use the real
+Breeze base style, not Qtengine's Fusion fallback. Kate's window and automatic
+editor theme were checked visually. Runtime GTK3/GTK4 probes followed both
+light and dark modes; tracing GTK3 file opens confirmed it reads the private
+`Dux-adw-gtk3` resources. Shared `kdeglobals` and the saved KDE profile remained
+byte-identical. Physical reboot into KDE and back remains an owner acceptance
+step. Existing applications may need restarting; a fresh login also refreshes
+the compositor's inherited resource paths for every launch route.
+
 Dux owns cursor selection through its settings and `niri/dms/cursor.kdl`.
 Bibata is the Niri session fallback. The packaged Dux cursor update only sends
 resources to the current XWayland server; it does not rewrite shared
