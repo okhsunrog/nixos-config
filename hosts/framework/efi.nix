@@ -80,6 +80,7 @@ let
         esp_partuuid = esp;
         continuous = true;
       };
+      nixos.preferred_specialisation = "niri";
       resume = hibernation.resumeConfig;
       ui.title = if hibernation.enable then "zbm-rs" else "zbm-rs diagnostic";
       ui.show_snapshots = true;

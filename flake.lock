@@ -644,17 +644,17 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1793413761,
-        "narHash": "sha256-Fr+4JKYNeuCw0MS+W7EXUn0JMfR0oqp6wezEtOf6E8w=",
+        "lastModified": 1793461826,
+        "narHash": "sha256-wbe9wvx2Chltvu6wOvnUBglWMK0Jwd/U2tl11fm/5HU=",
         "owner": "okhsunrog",
         "repo": "zbm-rs",
-        "rev": "1123d7307abd0a1eb48433ac68918f2965ba7cca",
+        "rev": "9e51e993c58899a185c3b587ff9ba707604c67e7",
         "type": "github"
       },
       "original": {
         "owner": "okhsunrog",
         "repo": "zbm-rs",
-        "rev": "1123d7307abd0a1eb48433ac68918f2965ba7cca",
+        "rev": "9e51e993c58899a185c3b587ff9ba707604c67e7",
         "type": "github"
       }
     },
