@@ -7,14 +7,14 @@ Three independently published EFI files are installed:
 
 | Firmware entry | Role | EFI path | Source |
 | --- | --- | --- | --- |
-| `0001`, `zbm-rs` | signed main loader, enforce | `EFI/zbm-rs/zbm-rs.EFI` | `9e51e993c58899a185c3b587ff9ba707604c67e7` |
+| `0001`, `zbm-rs` | signed main loader, enforce | `EFI/zbm-rs/zbm-rs.EFI` | `638ad4cd1f3d575e2caceb11848542fb7cdea98c` |
 | `0000`, `zbm-rs (rescue)` | physically accepted, unsigned known-good | `EFI/zbm-rs/rescue.EFI` | `9e51e993c58899a185c3b587ff9ba707604c67e7` |
 | `0002`, `zbm-rs (rescue candidate)` | tested candidate, now also promoted to known-good | `EFI/zbm-rs/rescue-candidate.EFI` | `9e51e993c58899a185c3b587ff9ba707604c67e7` |
 
 SHA-256 readback from all three ESP files passed. The main PE signature was
 verified against the owner certificate; both rescue images were verified unsigned:
 
-- Main: `03a763d6909dbd7744eaffc49c9771a5f58eeb00b8b45487638f3e2ddab3f2a9`.
+- Main: `7449b0c6ef0df34f0eda39108fe5cdaaa8e39f2ffd0f20a471b440edcadb4a54`.
 - Known-good rescue: `c681020f3cfb5ee474ef11ff0b1087a7f2ec7df8a285ff058c3e7d4e0ba9df1b`.
 - Candidate: `c681020f3cfb5ee474ef11ff0b1087a7f2ec7df8a285ff058c3e7d4e0ba9df1b`.
 
@@ -38,7 +38,7 @@ No BootNext was set. The obsolete signed migration fallback at
 It was the old `zbm-rs diagnostic` image, not the unsigned rescue. Normal
 installation does not recreate that fallback.
 
-The standard `rebuild-framework.sh boot` completed and selected generation **72**:
+Generation **72** provided the physical acceptance baseline:
 
 - KDE parent: `/nix/store/81m820l539g23972mn0dy7r4hh2ivsr0-nixos-system-nova-nixos-26.11.20261020.02c087f`.
 - Niri: `/nix/store/dw75lz0hirlh7dm33wbhbvlig7lnafi1-nixos-system-nova-nixos-niri-26.11.20261020.02c087f`.
@@ -60,6 +60,32 @@ cycle through the Dux power menu succeeded at 19:52–19:54, with the same boot 
 another authenticated NULL-primary context restore, a successful hibernate unit,
 inactive image status and healthy pools. Explicit cancellation and physical
 suspend-then-hibernate acceptance remain pending.
+
+The subsequent standard `rebuild-framework.sh boot` installed generation **73**
+with zbm-rs `638ad4c` and the guarded suspend-then-hibernate integration:
+
+- KDE parent: `/nix/store/cr06vj2ncj2addr0b31h8q3vy8vwsafy-nixos-system-nova-nixos-26.11.20261020.02c087f`.
+- Niri: `/nix/store/k6c8fil61np0jr6kdqr9c2jwni845ypk-nixos-system-nova-nixos-niri-26.11.20261020.02c087f`.
+
+The Niri closure was activated with `switch-to-configuration test` without a
+reboot. Logind reports both `CanHibernate=yes` and
+`CanSuspendThenHibernate=yes`; the active timeout is `2h` and hybrid sleep is
+disabled. The native composite unit has fail-closed preparation/completion hooks.
+The cached kernel and all 7410 existing signed module payloads were retained;
+only module provenance metadata was refreshed. Secure Boot remains enabled,
+integrity Lockdown and the early kexec prohibition remain active, the image is
+inactive, pools are healthy and no system services are failed. Main EFI signature
+and readback passed; both rescue hashes and firmware order are unchanged. The new
+main EFI has not yet received a physical firmware boot, and automatic RTC wake
+still needs the short physical test below.
+
+Validation passed: 98 Rust tests, formatting and Clippy; configuration checks;
+16 loader smoke scenarios; direct encrypted RAM restore; composite preparation
+refusal, pending-image activation refusal without header changes, early wake,
+failed-hibernation fallback and two repeated timed restorations. The compressed
+TPM CRB/SHA-256 variant with runtime systemd 262.1 also passed TPM absence/retry
+and a subsequent direct cycle, for four authenticated restores. The composite
+VMs inject ACPI power-button wakes and do not establish RTC alarm delivery.
 
 The internal installation enables backend `linux-tpm-signature-v2`, authenticated
 context-handoff protocol 1 and record protocol 2 with the declared LUKS2/ZFS
