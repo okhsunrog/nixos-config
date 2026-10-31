@@ -59,7 +59,7 @@
     zbm-rs.url = "github:okhsunrog/zbm-rs/9e51e993c58899a185c3b587ff9ba707604c67e7";
     # Independently pinned cancellation-only baseline; ordinary updates to the
     # main loader must not move this input or replace the known-good EFI slot.
-    zbm-rescue.url = "github:okhsunrog/zbm-rs/dc82575eb2d0b9cd9e9db1dafc4172838db8b585";
+    zbm-rescue.url = "github:okhsunrog/zbm-rs/9e51e993c58899a185c3b587ff9ba707604c67e7";
     signed-modules = {
       url = "path:/var/lib/zbm-rs-public/framework-modules";
       flake = false;

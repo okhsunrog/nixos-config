@@ -554,7 +554,7 @@
       "flake": false,
       "locked": {
         "lastModified": 1,
-        "narHash": "sha256-Kk+AeftXKAmvLos2kf6CfxRNEOWc9MnjjdBlIBYfCkA=",
+        "narHash": "sha256-kD2i6gcFD0vPCjvaJuEjFazP7oilEmp68mMN4Pxww3g=",
         "path": "/var/lib/zbm-rs-public/framework-modules",
         "type": "path"
       },
@@ -625,17 +625,17 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1793393110,
-        "narHash": "sha256-AimKOwyNwYpRwMKfoATjqC7mEvFAOcuM87MaEa2GC0g=",
+        "lastModified": 1793461826,
+        "narHash": "sha256-wbe9wvx2Chltvu6wOvnUBglWMK0Jwd/U2tl11fm/5HU=",
         "owner": "okhsunrog",
         "repo": "zbm-rs",
-        "rev": "dc82575eb2d0b9cd9e9db1dafc4172838db8b585",
+        "rev": "9e51e993c58899a185c3b587ff9ba707604c67e7",
         "type": "github"
       },
       "original": {
         "owner": "okhsunrog",
         "repo": "zbm-rs",
-        "rev": "dc82575eb2d0b9cd9e9db1dafc4172838db8b585",
+        "rev": "9e51e993c58899a185c3b587ff9ba707604c67e7",
         "type": "github"
       }
     },

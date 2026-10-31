@@ -110,6 +110,7 @@ let
     moduleOptions.insyde_efivarfs = "expose=1";
     loaderConfig = {
       boot.mode = "menu";
+      nixos.preferred_specialisation = "niri";
       resume = hibernation.cancellationConfig;
       ui = {
         show_snapshots = true;

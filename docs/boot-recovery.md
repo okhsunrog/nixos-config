@@ -2,69 +2,59 @@
 
 ## Current installation, checked October 31, 2026
 
-The main signed zbm-rs image is installed at `EFI/zbm-rs/zbm-rs.EFI` on the
-internal ESP, PARTUUID `aafa93cb-dbf2-483c-8ca2-cb035104f8b9`. Entry `0001` is
-the current firmware boot entry. The obsolete migration copy at
-`EFI/BOOT/BOOTX64.EFI` was deleted at the owner's request after it was identified
-as the old signed `zbm-rs diagnostic` loader, incompatible with the new protected
-authorization records. Its SHA-256 was
+The internal ESP is PARTUUID `aafa93cb-dbf2-483c-8ca2-cb035104f8b9`.
+Three independently published EFI files are installed:
+
+| Firmware entry | Role | EFI path | Source |
+| --- | --- | --- | --- |
+| `0001`, `zbm-rs` | signed main loader, enforce | `EFI/zbm-rs/zbm-rs.EFI` | `9e51e993c58899a185c3b587ff9ba707604c67e7` |
+| `0000`, `zbm-rs (rescue)` | physically accepted, unsigned known-good | `EFI/zbm-rs/rescue.EFI` | `dc82575eb2d0b9cd9e9db1dafc4172838db8b585` |
+| `0002`, `zbm-rs (rescue candidate)` | updated unsigned candidate, awaiting physical acceptance | `EFI/zbm-rs/rescue-candidate.EFI` | `9e51e993c58899a185c3b587ff9ba707604c67e7` |
+
+SHA-256 readback from all three ESP files passed. The main PE signature was
+verified against the owner certificate; both rescue images were verified unsigned:
+
+- Main: `03a763d6909dbd7744eaffc49c9771a5f58eeb00b8b45487638f3e2ddab3f2a9`.
+- Known-good rescue: `752790bff27fce1412b63441d3f35b335fc9f372dddc8ae55de3621691345a8f`.
+- Candidate: `c681020f3cfb5ee474ef11ff0b1087a7f2ec7df8a285ff058c3e7d4e0ba9df1b`.
+
+The owner physically verified rejection of the old candidate with Secure Boot
+on, its startup with Secure Boot off, and subsequently booted Niri through it
+(`BootCurrent=0002`). With explicit owner approval, that exact candidate was
+promoted to known-good before updating the candidate slot. The updated candidate
+passed exact-production-byte OVMF menu, F2 and direct F10 poweroff checks. No host
+disks were attached. Physical acceptance of this new candidate is still pending;
+it was not promoted automatically. Both rescue slots remain cancellation-only.
+
+BootOrder is `0001,2001,2002,2003,0002,0000`; the protected main stays first.
+No BootNext was set. The obsolete signed migration fallback at
+`EFI/BOOT/BOOTX64.EFI` was removed earlier at the owner's request; its hash was
 `3996cbd48195b36974e275eae325be7cf0adb0f3331446eb0a15838243407b30`.
-Deletion verified that exact image and left the main/rescue hashes and firmware
-entries unchanged. The normal installer updates only its explicitly selected
-`EFI/zbm-rs/zbm-rs.EFI` path and does not recreate this fallback copy.
-Use entry `0001` for the protected loader. The independent unsigned
-rescue candidate is now staged at `EFI/zbm-rs/rescue-candidate.EFI`, entry `0002`.
-Its SHA-256 is
-`752790bff27fce1412b63441d3f35b335fc9f372dddc8ae55de3621691345a8f`.
-The existing boot order still starts with `0001`; no BootNext was set. The
-candidate has not been physically accepted or promoted to `rescue.EFI`.
+It was the old `zbm-rs diagnostic` image, not the unsigned rescue. Normal
+installation does not recreate that fallback.
 
-The prepared configuration pins the main source to
-`1123d7307abd0a1eb48433ac68918f2965ba7cca`, with the VM-tested experimental
-authenticated-resume backend. The independently retained rescue stays at
-`dc82575eb2d0b9cd9e9db1dafc4172838db8b585`, the cancellation-only guarded
-baseline which rejects enforced resume. The rescue keeps its own Nixpkgs, kernel and ZFS. Normal
-`rebuild-framework.sh` never installs or updates it. The explicit rescue updater
-stages a candidate; promotion requires the exact tested hash and receipt, as
-described below. The source pin is not by itself a pin of the complete artifact:
-retain the built plan, public image inputs, manifest and closure too.
+The standard `rebuild-framework.sh boot` completed and selected generation **72**:
 
-The configuration enables protected hibernation on the internal NVMe installation;
-the portable SSD retains ordinary paging without hibernation. The owner-signed
-production build and `boot` installation completed. The selected system profile
-is generation **71**, with these prepared and authorized closures:
+- KDE parent: `/nix/store/81m820l539g23972mn0dy7r4hh2ivsr0-nixos-system-nova-nixos-26.11.20261020.02c087f`.
+- Niri: `/nix/store/dw75lz0hirlh7dm33wbhbvlig7lnafi1-nixos-system-nova-nixos-niri-26.11.20261020.02c087f`.
 
-- KDE: `/nix/store/97ydfk12kgafkidd46a5d43r2k86b4kd-nixos-system-nova-nixos-26.11.20261020.02c087f`.
-- Niri: `/nix/store/gsh283lv5a3jvbgky44xzdp2wjcnvil6-nixos-system-nova-nixos-niri-26.11.20261020.02c087f`.
+Main and candidate now prefer the Niri specialisation for ordinary boot. The
+main loader still prioritises the exact saved-session target. Key-unlock progress
+and broker-reported pool refresh scope are enabled. The kernel was reused and
+all 7410 existing aggregate module signatures were revalidated. Installation did
+not switch or reboot the running session. The latest main EFI and generation 72
+still need physical acceptance; generation 71 previously booted through the main
+loader with Secure Boot and integrity Lockdown. Physical hibernation remains
+unverified.
 
-The main EFI SHA-256 is
-`e3d5db9c8f2997b3e64a2c07ff36c9587038f5f8ed464e956cba088b3b9b3b4a`.
-Readback from the ESP and owner-certificate PE verification passed; the rescue
-candidate hash and boot order remained unchanged. Installation did not switch or
-automatically reboot the running desktop/kernel. A subsequent physical boot
-through entry `0001` into generation 71 was confirmed with Secure Boot enabled,
-SetupMode disabled and integrity Lockdown active. Physical hibernation and the
-actual unsigned rescue boot still require acceptance; the photographed diagnostic
-loader was not the rescue candidate.
-
-All 7410 aggregate modules were signed and verified against the exact owner
-kernel and public certificate. Both target bundles passed independent exact-byte
-PE/IMA/CMS checks and protected native-resume contract validation, including
-ordered arguments, kernel/secret-appended initramfs, resume policy and import
-dependencies. The production loader is `enforce`, has no test SSH, disables ESP
-diagnostics and uses the same protected kernel. Its signed EFI manifest digest
-now describes the final published bytes; the stale unsigned-digest defect was
-fixed in the pinned zbm-rs source and regression-checked with disposable keys.
-
-Source validation on October 31 passed after the main input update: Nix formatting,
-ShellCheck, `ssd-config` and the disposable encrypted ZFS/LUKS storage-boot VM.
-Lockfile comparison confirmed that only the main zbm-rs and signed-modules nodes
-changed. KDE and
-niri retain the early kexec prohibition; the rescue policy remains `cancel-only`.
-Evaluation with the hibernation option enabled selects backend
-`linux-tpm-signature-v2`, context-handoff protocol 1 and record protocol 2 with
-the configured LUKS2/ZFS-unlock topology. These checks do not establish physical
-hardware acceptance.
+The internal installation enables backend `linux-tpm-signature-v2`, authenticated
+context-handoff protocol 1 and record protocol 2 with the declared LUKS2/ZFS
+credential topology. KDE and Niri retain the early kexec prohibition. The portable
+SSD retains ordinary paging without hibernation. Rust tests, Clippy, configuration
+checks, ordinary cross-pool unlock smoke, preferred-specialisation kexec, the
+19-scenario resume/cancellation fixture and the encrypted ZFS/LUKS storage-boot
+VM passed before installation. Nix formatting and ESP readback passed after the
+rescue update. VM results do not establish physical hibernation acceptance.
 
 ## Agreed protected hibernation direction
 
@@ -241,8 +231,10 @@ Install the candidate at a separate path/entry while preserving the known-good
 one. Promote it only after an explicit successful physical boot. Do not refresh
 rescue as a side effect of normal main-loader updates. The candidate/known-good
 publisher and its FAT/OVMF publication test are implemented in zbm-rs. Host pin
-integration has staged the candidate, without promotion. The exact unsigned production image booted in OVMF,
-displayed the menu, accepted F2 and powered off directly with F10. No host disks
+integration retains the physically accepted image in the known-good slot and
+stages new builds separately in the candidate slot. The updated exact unsigned
+production image booted in OVMF, displayed the menu, accepted F2 and powered off
+directly with F10. No host disks
 were attached, so that run does not certify production ZFS/LUKS access or physical
 boot; the separate 19-scenario UI fixture covers virtual encrypted devices.
 
