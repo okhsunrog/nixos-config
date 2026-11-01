@@ -296,6 +296,58 @@ cycle. The VM harness injects ACPI wake events because its RTC path was unreliab
 it verifies timer decisions and actual RAM restoration, not the Framework's RTC
 or low-battery wake capability. Do not infer those physical results from VM tests.
 
+### Early RTC wakeup and the local systemd patch
+
+On 2026-11-01 the Framework reproduced upstream systemd issue
+[#38193](https://github.com/systemd/systemd/issues/38193) with systemd 262.1.
+Tracing with the `boot` clock captured two unsuccessful timed transitions:
+systemd polled its timerfd about 28 ms and 125 ms before its actual deadline,
+received no event, and treated the wakeup as manual. A third cycle crossed the
+deadline and successfully hibernated and resumed. The repeated sleep requests
+with the lid still closed were separate logind operations.
+
+`packages/systemd-s2h-timer.patch` shares a timer-readiness helper between the
+ACPI battery-alarm and software battery-estimation paths. If the timerfd has
+between zero and one second remaining, it waits up to one second for the real
+event. Distant deadlines, disarmed timers, and already expired timers retain a
+nonblocking poll. Readiness is not consumed and hibernation is not requested
+before the timer actually expires. This is a bounded RTC-granularity workaround;
+it does not establish whether a near-deadline wake was caused by RTC or input.
+A user waking the machine within the final second may therefore still get
+hibernation. Skew greater than one second is outside its scope.
+
+The package build runs `test-sleep-timer` against real timerfds, covering the
+28/125 ms observations, a 750 ms early wake, a distant manual wake, expired and
+disarmed timers, and an invalid descriptor. Physical acceptance of the patch
+uses repeated two-minute timed cycles and a manual wake well before the
+deadline, with the same kernel/RTC/timerfd tracing used for the original failure.
+Keep the normal two-hour policy and the ZBM preparation/completion guards.
+
+Three additional physical cycles passed on November 1, using the patched
+`systemd-sleep`: suspend at 05:15:39, 05:23:51 and 05:31:57 Moscow time led to
+automatic hibernation at 05:17:40, 05:25:52 and 05:33:58. All three authenticated
+RAM restores succeeded, the TPM NULL-primary context was restored, and ZFS pools
+remained healthy. The retained traces have no overruns. Timer polling occurred
+1.103 s, 0.977 s and 1.217 s after the respective deadline, so these runs validate
+repeated automatic transitions but did not exercise the new early-wake wait
+branch on hardware. Generation 79 subsequently installed the patched systemd
+through the normal host package configuration, and its Niri specialisation was
+activated live. PID 1 and the native suspend-then-hibernate service now use the
+patched package; the service uses the same binary that passed these physical
+cycles. The ordinary two-hour timeout is active. The temporary service override,
+private tracing instance and extra sleep debug logging were removed; retained
+diagnostic artifacts are no longer used by the service.
+
+The patched host package also passed the disposable encrypted-pool VM on
+2026-11-01: manual wake before the timeout, preparation refusal, preservation of
+a pending swap header, failed-hibernation fallback, and four authenticated
+compressed-image restorations with CRB/SHA-256 TPM, including TPM-unavailable
+refusal/retry and a subsequent direct hibernation. This VM uses the existing
+post-deadline ACPI wake injection; the early-wake window is covered by real
+timerfd unit tests. The physical results above establish automatic timed
+transitions on the Framework; the early-wake wait branch still has unit-test
+coverage rather than an observed physical invocation.
+
 ## Independent rescue lifecycle
 
 Retain a deliberately chosen known-good rescue, rather than automatically using

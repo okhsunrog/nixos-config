@@ -14,7 +14,7 @@ let
     src = source;
     # Match Nixpkgs' 262 patch set: rootprefix and the timesyncd fix are
     # upstream, and the timezone patch needs its 262 rebase.
-    patches =
+    patches = lib.unique (
       map
         (
           patch:
@@ -34,7 +34,9 @@ let
               "0006-timesyncd-disable-NSCD-when-DNSSEC-validation-is-dis.patch"
             ])
           ) previous.patches
-        );
+        )
+      ++ [ ./systemd-s2h-timer.patch ]
+    );
     mesonFlags = builtins.filter (flag: !(lib.hasPrefix "-Dgcrypt=" flag)) previous.mesonFlags;
   };
   # Preserve NixOS's package options and patches when the system module
@@ -58,4 +60,18 @@ let
 in
 assert lib.assertMsg (pkgs.systemd.version == "261.3")
   "systemd-262.nix expects systemd 261.3 as its base. Recheck the local patches and overrideAttrs adapter, or replace this package with the tested upstream systemd.";
-wrap (pkgs.systemd.overrideAttrs adapt)
+wrap (
+  pkgs.systemd.overrideAttrs (
+    previous:
+    adapt previous
+    // {
+      # Exercise real timerfds, including the early-wake skews measured on the
+      # Framework. Run the focused test even though the full upstream suite is
+      # unsuitable for this package build sandbox.
+      postBuild = (previous.postBuild or "") + ''
+        ninja test-sleep-timer
+        ./test-sleep-timer
+      '';
+    }
+  )
+)

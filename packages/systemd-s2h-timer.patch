@@ -1,0 +1,192 @@
+diff --git a/src/sleep/meson.build b/src/sleep/meson.build
+index 663a36e..865a1c9 100644
+--- a/src/sleep/meson.build
++++ b/src/sleep/meson.build
+@@ -4,12 +4,16 @@ executables += [
+         libexec_template + {
+                 'name' : 'systemd-sleep',
+                 'sources' : files('sleep.c'),
+-                'export' : files('battery-capacity.c'),
++                'export' : files('battery-capacity.c', 'sleep-timer.c'),
+         },
+         test_template + {
+                 'sources' : files('test-battery-capacity.c'),
+                 'import' : ['systemd-sleep'],
+         },
++        test_template + {
++                'sources' : files('test-sleep-timer.c'),
++                'import' : ['systemd-sleep'],
++        },
+ ]
+ 
+ if install_sysconfdir_samples
+diff --git a/src/sleep/sleep-timer.c b/src/sleep/sleep-timer.c
+new file mode 100644
+index 0000000..0e685e5
+--- /dev/null
++++ b/src/sleep/sleep-timer.c
+@@ -0,0 +1,35 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++
++#include <errno.h>
++#include <poll.h>
++#include <sys/timerfd.h>
++
++#include "io-util.h"
++#include "log.h"
++#include "sleep-timer.h"
++#include "time-util.h"
++
++int sleep_timer_wait(int fd) {
++        struct itimerspec ts;
++        usec_t left, timeout = 0;
++
++        if (timerfd_gettime(fd, &ts) < 0)
++                return -errno;
++
++        left = timespec_load(&ts.it_value);
++
++        /* RTC alarms may wake the system slightly before the higher-resolution timerfd expires.
++         * An immediate poll then misclassifies the wakeup as manual and abandons hibernation.
++         * Allow up to one second for a timer whose deadline is already this close, matching the
++         * granularity of common RTC alarms. Do not wait for a distant deadline after a manual wakeup.
++         * A manual wakeup within this window may therefore be followed by hibernation as well.
++         * Keep polling for the actual event: do not hibernate before the timer has expired, and do
++         * not consume it here. Disarmed and already expired timers need only a nonblocking poll. */
++        if (left > 0 && left <= USEC_PER_SEC) {
++                timeout = USEC_PER_SEC;
++                log_debug("Suspend-then-hibernate timer expires in %s, allowing up to 1s for the timer event.",
++                          FORMAT_TIMESPAN(left, USEC_PER_MSEC));
++        }
++
++        return fd_wait_for_event(fd, POLLIN, timeout);
++}
+diff --git a/src/sleep/sleep-timer.h b/src/sleep/sleep-timer.h
+new file mode 100644
+index 0000000..0fd56e4
+--- /dev/null
++++ b/src/sleep/sleep-timer.h
+@@ -0,0 +1,4 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++#pragma once
++
++int sleep_timer_wait(int fd);
+diff --git a/src/sleep/sleep.c b/src/sleep/sleep.c
+index 06cc857..f3d1fd7 100644
+--- a/src/sleep/sleep.c
++++ b/src/sleep/sleep.c
+@@ -38,6 +38,7 @@
+ #include "main-func.h"
+ #include "os-util.h"
+ #include "sleep-config.h"
++#include "sleep-timer.h"
+ #include "special.h"
+ #include "strv.h"
+ #include "time-util.h"
+@@ -464,7 +465,7 @@ static int custom_timer_suspend(const SleepConfig *sleep_config, SleepOperation
+                 if (r < 0)
+                         return r;
+ 
+-                r = fd_wait_for_event(tfd, POLLIN, 0);
++                r = sleep_timer_wait(tfd);
+                 if (r < 0)
+                         return log_error_errno(r, "Error polling timerfd: %m");
+                 /* Store fd_wait status */
+@@ -578,7 +579,7 @@ static int execute_s2h(const SleepConfig *sleep_config, SleepOperation main_oper
+ 
+                         if (tfd >= 0) {
+                                 /* Check if our HibernateDelaySec timer fired */
+-                                r = fd_wait_for_event(tfd, POLLIN, 0);
++                                r = sleep_timer_wait(tfd);
+                                 if (r < 0)
+                                         return log_error_errno(r, "Error polling timerfd: %m");
+                                 if (FLAGS_SET(r, POLLIN)) {
+diff --git a/src/sleep/test-sleep-timer.c b/src/sleep/test-sleep-timer.c
+new file mode 100644
+index 0000000..ad9c660
+--- /dev/null
++++ b/src/sleep/test-sleep-timer.c
+@@ -0,0 +1,83 @@
++/* SPDX-License-Identifier: LGPL-2.1-or-later */
++
++#include <errno.h>
++#include <poll.h>
++#include <sys/timerfd.h>
++#include <unistd.h>
++
++#include "fd-util.h"
++#include "log.h"
++#include "macro.h"
++#include "sleep-timer.h"
++#include "time-util.h"
++
++static int new_timer(usec_t delay) {
++        struct itimerspec ts = {};
++        int fd;
++
++        fd = timerfd_create(CLOCK_BOOTTIME, TFD_NONBLOCK|TFD_CLOEXEC);
++        assert_se(fd >= 0);
++        timespec_store(&ts.it_value, delay);
++        assert_se(timerfd_settime(fd, 0, &ts, NULL) == 0);
++        return fd;
++}
++
++static void test_early_wakeup(void) {
++        /* The first two cases reproduce the measured hardware skew. Also cover a larger skew.
++         * Readiness must come from the real timerfd, rather than an inferred/rounded deadline. */
++        FOREACH_ELEMENT(delay, ((usec_t[]) { 28 * USEC_PER_MSEC, 125 * USEC_PER_MSEC, 750 * USEC_PER_MSEC })) {
++                _cleanup_close_ int fd = new_timer(*delay);
++                uint64_t expirations;
++                int r;
++
++                r = sleep_timer_wait(fd);
++                assert_se(r >= 0);
++                assert_se(FLAGS_SET(r, POLLIN));
++                assert_se(read(fd, &expirations, sizeof(expirations)) == sizeof(expirations));
++                assert_se(expirations == 1);
++        }
++}
++
++static void test_manual_wakeup(void) {
++        _cleanup_close_ int fd = new_timer(30 * USEC_PER_SEC);
++        usec_t before = now(CLOCK_MONOTONIC);
++
++        assert_se(sleep_timer_wait(fd) == 0);
++        assert_se(now(CLOCK_MONOTONIC) - before < USEC_PER_SEC / 2);
++}
++
++static void test_expired_timer(void) {
++        _cleanup_close_ int fd = new_timer(USEC_PER_MSEC);
++        int r;
++
++        assert_se(usleep_safe(20 * USEC_PER_MSEC) == 0);
++        r = sleep_timer_wait(fd);
++        assert_se(r >= 0);
++        assert_se(FLAGS_SET(r, POLLIN));
++}
++
++static void test_disarmed_timer(void) {
++        _cleanup_close_ int fd = new_timer(0);
++        usec_t before = now(CLOCK_MONOTONIC);
++
++        assert_se(sleep_timer_wait(fd) == 0);
++        assert_se(now(CLOCK_MONOTONIC) - before < USEC_PER_SEC / 2);
++}
++
++static void test_invalid_timer(void) {
++        assert_se(sleep_timer_wait(-1) == -EBADF);
++}
++
++int main(void) {
++        log_set_max_level(LOG_DEBUG);
++        log_setup();
++
++        test_early_wakeup();
++        test_manual_wakeup();
++        test_expired_timer();
++        test_disarmed_timer();
++        test_invalid_timer();
++
++        log_info("All sleep timer tests passed.");
++        return 0;
++}
